@@ -1,16 +1,14 @@
 package config
 
 import (
-	"os"
-
 	"github.com/gocroot/helper/atdb"
 )
 
-var MongoString string = os.Getenv("MONGOSTRING")
+var MongoString string = "mongodb+srv://idbiz:OTBmC4Bcs9AyUdjw@idbiz.bphmr.mongodb.net/"
 
 var mongoinfo = atdb.DBInfo{
 	DBString: MongoString,
-	DBName:   "naskah",
+	DBName:   "idbizdevelop",
 }
 
 var Mongoconn, ErrorMongoconn = atdb.MongoConnect(mongoinfo)
