@@ -43,7 +43,7 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 	file, header, err := req.FormFile("uploadReferences")
 	if err != nil {
 		var respn model.Response
-		respn.Status = "Error: Gambar toko tidak ditemukan"
+		respn.Status = "Error: Gambar tidak ditemukan"
 		at.WriteJSON(respw, http.StatusBadRequest, respn)
 		return
 	}
