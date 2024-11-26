@@ -6,9 +6,11 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+	// "github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -206,3 +208,55 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func DeleteDataPemesanan(respw http.ResponseWriter, req *http.Request) {
+	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	// if err != nil {
+	// 	payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+	// 	if err != nil {
+	// 		var respn model.Response
+	// 		respn.Status = "Error: Token Tidak Valid"
+	// 		respn.Response = err.Error()
+	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
+	// 		return
+	// 	}
+	// }
+
+	pemesananId := req.URL.Query().Get("pemesananId")
+	if pemesananId == "" {
+		var respn model.Response
+		respn.Status = "Error: ID Pemesanan tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(pemesananId)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: ID Pemesanan tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	filter := bson.M{"_id": objectID}
+	deleteData, err := atdb.DeleteOneDoc(config.Mongoconn, "pemesanan", filter)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal menghapus data pemesanan"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Pemesanan berhasil dihapus",
+		"data": map[string]interface{}{
+			// "user":    payload.Id,
+			"pemesanan_id": objectID.Hex(),
+			"deleted": deleteData.DeletedCount,
+		},
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+

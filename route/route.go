@@ -193,6 +193,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// Get Pemesanan By Id
 	case method == "GET" && path == "/pemesanan/id":
 		controller.GetPemesananById(w, r)
+	case method == "DELETE" && path == "/pemesanan/delete":
+		controller.DeleteDataPemesanan(w, r)
 	// Google Auth
 	default:
 		controller.NotFound(w, r)
