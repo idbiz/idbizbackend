@@ -145,6 +145,41 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 // 	at.WriteJSON(respw, http.StatusOK, data)
 // }
 
+func GetDataPemesanan(respw http.ResponseWriter, req *http.Request) {
+	// Tambah validasi akses token
+	// _, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	// if err != nil {
+	// 	_, err = watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	// 	if err != nil {
+	// 		var respn model.Response
+	// 		respn.Status = "Error: Token Tidak Valid"
+	// 		respn.Response = err.Error()
+	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
+	// 		return
+	// 	}
+	// }
+
+	data, err := atdb.GetAllDoc[[]model.Pemesanan](config.Mongoconn, "pemesanan", primitive.M{"design_type": "Banner Design"})
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Data pemesanan tidak ditemukan"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	if len(data) == 0 {
+		var respn model.Response
+		respn.Status = "Error: Data pemesanan kosong"
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	// Jika data ditemukan, kirimkan data dalam bentuk JSON
+	at.WriteJSON(respw, http.StatusOK, data)
+}
+
+// Get All Pemesanan
 func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 	data, err := atdb.GetAllDoc[[]model.Pemesanan](config.Mongoconn, "pemesanan", primitive.M{})
 	if err != nil {
