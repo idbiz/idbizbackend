@@ -6,11 +6,12 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
-
+	// "github.com/gocroot/helper/watoken"
 	// "github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -209,158 +210,158 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-func UpdateDataMenu(respw http.ResponseWriter, req *http.Request) {
-	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	// if err != nil {
-	// 	payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Token Tidak Valid"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 		return
-	// 	}
-	// }
+// func UpdateDataPemesanan(respw http.ResponseWriter, req *http.Request) {
+// 	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+// 	if err != nil {
+// 		payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: Token Tidak Valid"
+// 			respn.Response = err.Error()
+// 			at.WriteJSON(respw, http.StatusForbidden, respn)
+// 			return
+// 		}
+// 	}
 
-	pemesananID := req.URL.Query().Get("id")
-	if pemesananID == "" {
-		var respn model.Response
-		respn.Status = "Error: ID Menu tidak ditemukan"
-		at.WriteJSON(respw, http.StatusBadRequest, respn)
-		return
-	}
+// 	pemesananID := req.URL.Query().Get("id")
+// 	if pemesananID == "" {
+// 		var respn model.Response
+// 		respn.Status = "Error: ID Menu tidak ditemukan"
+// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
+// 		return
+// 	}
 
-	objectID, err := primitive.ObjectIDFromHex(pemesananID)
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: ID Menu tidak valid"
-		at.WriteJSON(respw, http.StatusBadRequest, respn)
-		return
-	}
+// 	objectID, err := primitive.ObjectIDFromHex(pemesananID)
+// 	if err != nil {
+// 		var respn model.Response
+// 		respn.Status = "Error: ID Menu tidak valid"
+// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
+// 		return
+// 	}
 
-	filter := bson.M{"_id": objectID}
-	dataPemesanan, err := atdb.GetOneDoc[model.Pemesanan](config.Mongoconn, "pemesanan", filter)
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Pemesanan tidak ditemukan"
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusNotFound, respn)
-		return
-	}
+// 	filter := bson.M{"_id": objectID}
+// 	dataPemesanan, err := atdb.GetOneDoc[model.Pemesanan](config.Mongoconn, "pemesanan", filter)
+// 	if err != nil {
+// 		var respn model.Response
+// 		respn.Status = "Error: Pemesanan tidak ditemukan"
+// 		respn.Response = err.Error()
+// 		at.WriteJSON(respw, http.StatusNotFound, respn)
+// 		return
+// 	}
 
-	err = req.ParseMultipartForm(10 << 20)
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Gagal memproses form data"
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusBadRequest, respn)
-		return
-	}
+// 	err = req.ParseMultipartForm(10 << 20)
+// 	if err != nil {
+// 		var respn model.Response
+// 		respn.Status = "Error: Gagal memproses form data"
+// 		respn.Response = err.Error()
+// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
+// 		return
+// 	}
 
-	// var menuImageURL string = dataMenu.Image
-	// file, header, err := req.FormFile("menuImage")
-	// if err == nil {
-	// 	defer file.Close()
-	// 	fileContent, err := io.ReadAll(file)
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Gagal membaca file"
-	// 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
-	// 		return
-	// 	}
+// 	var menuImageURL string = dataMenu.Image
+// 	file, header, err := req.FormFile("menuImage")
+// 	if err == nil {
+// 		defer file.Close()
+// 		fileContent, err := io.ReadAll(file)
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: Gagal membaca file"
+// 			at.WriteJSON(respw, http.StatusInternalServerError, respn)
+// 			return
+// 		}
 
-	// 	hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
-	// 	GitHubAccessToken := config.GHAccessToken
-	// 	GitHubAuthorName := "Rolly Maulana Awangga"
-	// 	GitHubAuthorEmail := "awangga@gmail.com"
-	// 	githubOrg := "idbiz"
-	// 	githubRepo := "img"
-	// 	pathFile := "menuImages/" + hashedFileName
-	// 	replace := true
+// 		hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
+// 		GitHubAccessToken := config.GHAccessToken
+// 		GitHubAuthorName := "Rolly Maulana Awangga"
+// 		GitHubAuthorEmail := "awangga@gmail.com"
+// 		githubOrg := "idbiz"
+// 		githubRepo := "img"
+// 		pathFile := "menuImages/" + hashedFileName
+// 		replace := true
 
-	// 	content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Gagal mengupload gambar ke GitHub"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
-	// 		return
-	// 	}
+// 		content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: Gagal mengupload gambar ke GitHub"
+// 			respn.Response = err.Error()
+// 			at.WriteJSON(respw, http.StatusInternalServerError, respn)
+// 			return
+// 		}
 
-	// 	menuImageURL = *content.Content.HTMLURL
-	// }
+// 		menuImageURL = *content.Content.HTMLURL
+// 	}
 
-	pemesananFullname := req.FormValue("fullname")
-	pemesananEmail := req.FormValue("email")
-	pemesananPhoneNumber := req.FormValue("phone_number")
-	pemesananDesignType := req.FormValue("design_type")
-	pemesananOrderDescription := req.FormValue("order_description")
-	// pemesananUploadReferences := req.FormValue("upload_references")
+// 	pemesananFullname := req.FormValue("fullname")
+// 	pemesananEmail := req.FormValue("email")
+// 	pemesananPhoneNumber := req.FormValue("phone_number")
+// 	pemesananDesignType := req.FormValue("design_type")
+// 	pemesananOrderDescription := req.FormValue("order_description")
+// 	pemesananUploadReferences := req.FormValue("upload_references")
 
-	// Ambil data kategori berdasarkan ID jika diberikan
-	// var existingCategory model.Category
-	// if categoryID != "" {
-	// 	categoryObjID, err := primitive.ObjectIDFromHex(categoryID)
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: ID Kategori tidak valid"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
-	// 		return
-	// 	}
-	// 	categoryFilter := bson.M{"_id": categoryObjID}
-	// 	existingCategory, err = atdb.GetOneDoc[model.Category](config.Mongoconn, "category", categoryFilter)
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Kategori tidak ditemukan"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusNotFound, respn)
-	// 		return
-	// 	}
-	// }
+// 	// Ambil data kategori berdasarkan ID jika diberikan
+// 	var existingCategory model.Category
+// 	if categoryID != "" {
+// 		categoryObjID, err := primitive.ObjectIDFromHex(categoryID)
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: ID Kategori tidak valid"
+// 			respn.Response = err.Error()
+// 			at.WriteJSON(respw, http.StatusBadRequest, respn)
+// 			return
+// 		}
+// 		categoryFilter := bson.M{"_id": categoryObjID}
+// 		existingCategory, err = atdb.GetOneDoc[model.Category](config.Mongoconn, "category", categoryFilter)
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: Kategori tidak ditemukan"
+// 			respn.Response = err.Error()
+// 			at.WriteJSON(respw, http.StatusNotFound, respn)
+// 			return
+// 		}
+// 	}
 
-	updateFields := bson.M{
-		"fullname":          pemesananFullname,
-		"email":             pemesananEmail,
-		"phone_number":      pemesananPhoneNumber,
-		"design_type":       pemesananDesignType,
-		"order_description": pemesananOrderDescription,
-		// "upload_references": pemesananUploadReferences,
-	}
+// 	updateFields := bson.M{
+// 		"fullname":          pemesananFullname,
+// 		"email":             pemesananEmail,
+// 		"phone_number":      pemesananPhoneNumber,
+// 		"design_type":       pemesananDesignType,
+// 		"order_description": pemesananOrderDescription,
+// 		"upload_references": pemesananUploadReferences,
+// 	}
 
-	// if categoryID != "" {
-	// 	updateFields["category"] = existingCategory
-	// }
+// 	if categoryID != "" {
+// 		updateFields["category"] = existingCategory
+// 	}
 
-	_, err = atdb.UpdateOneDoc(config.Mongoconn, "menu", filter, updateFields)
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Gagal mengupdate data pemesanan di database"
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusInternalServerError, respn)
-		return
-	}
+// 	_, err = atdb.UpdateOneDoc(config.Mongoconn, "menu", filter, updateFields)
+// 	if err != nil {
+// 		var respn model.Response
+// 		respn.Status = "Error: Gagal mengupdate data pemesanan di database"
+// 		respn.Response = err.Error()
+// 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+// 		return
+// 	}
 
-	response := map[string]interface{}{
-		"status":  "success",
-		"message": "Pemesanan berhasil diperbarui",
-		"data": map[string]interface{}{
-			// "nama":    payload.Alias,
-			"menu_id":           objectID.Hex(),
-			"fullname":          pemesananFullname,
-			"email":             pemesananEmail,
-			"phone_number":      pemesananPhoneNumber,
-			"design_type":       pemesananDesignType,
-			"order_description": pemesananOrderDescription,
-			// "image":   menuImageURL,
-			// "category": map[string]interface{}{
-			// 	"id":            existingCategory.ID.Hex(),
-			// 	"name_category": existingCategory.CategoryName,
-			// },
-		},
-	}
-	at.WriteJSON(respw, http.StatusOK, response)
-}
+// 	response := map[string]interface{}{
+// 		"status":  "success",
+// 		"message": "Pemesanan berhasil diperbarui",
+// 		"data": map[string]interface{}{
+// 			// "nama":    payload.Alias,
+// 			"menu_id":           objectID.Hex(),
+// 			"fullname":          pemesananFullname,
+// 			"email":             pemesananEmail,
+// 			"phone_number":      pemesananPhoneNumber,
+// 			"design_type":       pemesananDesignType,
+// 			"order_description": pemesananOrderDescription,
+// 			"image":   menuImageURL,
+// 			"category": map[string]interface{}{
+// 				"id":            existingCategory.ID.Hex(),
+// 				"name_category": existingCategory.CategoryName,
+// 			},
+// 		},
+// 	}
+// 	at.WriteJSON(respw, http.StatusOK, response)
+// }
 
 func DeleteDataPemesanan(respw http.ResponseWriter, req *http.Request) {
 	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
