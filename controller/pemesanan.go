@@ -203,7 +203,7 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 
 	response := map[string]interface{}{
 		"status":  "success",
-		"message": "Data menu berhasil diambil",
+		"message": "Data pemesanan berhasil diambil",
 		"data":    pemesanans,
 	}
 
