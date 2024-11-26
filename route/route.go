@@ -191,7 +191,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/pemesanan":
 		controller.GetAllPemesanan(w, r)
 		// Get Pemesanan By Id
-	case method == "GET" && path == "/menu-id":
+	case method == "GET" && path == "/pemesanan/id":
 		controller.GetPemesananById(w, r)
 	// Google Auth
 	default:
