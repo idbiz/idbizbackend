@@ -9,9 +9,9 @@ import (
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/helper/ghupload"
-
-	// "github.com/gocroot/helper/watoken"
 	"github.com/gocroot/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -105,6 +105,95 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 		"status":  "success",
 		"message": "Pemesanan berhasil ditambahkan",
 		"data":    dataPemesanan,
+	}
+
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+// Update
+// func GetDataPemesanan(respw http.ResponseWriter, req *http.Request) {
+// 	// Tambah validasi akses token
+// 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+// 	if err != nil {
+// 		_, err = watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: Token Tidak Valid"
+// 			respn.Response = err.Error()
+// 			at.WriteJSON(respw, http.StatusForbidden, respn)
+// 			return
+// 		}
+// 	}
+
+// 	data, err := atdb.GetAllDoc[[]model.Pemesanan](config.Mongoconn, "pemesanan", primitive.M{"name": "Sayur Lodeh Gaming"})
+// 	if err != nil {
+// 		var respn model.Response
+// 		respn.Status = "Error: Data menu tidak ditemukan"
+// 		respn.Response = err.Error()
+// 		at.WriteJSON(respw, http.StatusNotFound, respn)
+// 		return
+// 	}
+
+// 	if len(data) == 0 {
+// 		var respn model.Response
+// 		respn.Status = "Error: Data menu kosong"
+// 		at.WriteJSON(respw, http.StatusNotFound, respn)
+// 		return
+// 	}
+
+// 	// Jika data ditemukan, kirimkan data dalam bentuk JSON
+// 	at.WriteJSON(respw, http.StatusOK, data)
+// }
+
+func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
+	data, err := atdb.GetAllDoc[[]model.Pemesanan](config.Mongoconn, "pemesanan", primitive.M{})
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Data pemesanan tidak ditemukan"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	var pemesanans []map[string]interface{}
+	for _, pemesanan := range data {
+		// imageUrl := strings.Replace(pemesanan.UploadReferences, "github.com", "raw.githubusercontent.com", 1)
+		// imageUrls := strings.Replace(imageUrl, "/blob/", "/", 1)
+
+		// finalPrice := menu.Price
+		// diskonValue := 0.00
+		// potonganHarga := 0.00
+
+		// if menu.Diskon != nil && menu.Diskon.Status == "Active" {
+		// 	if menu.Diskon.JenisDiskon == "Persentase" {
+		// 		diskonAmount := float64(menu.Price) * (float64(menu.Diskon.NilaiDiskon) / 100)
+		// 		finalPrice = menu.Price - int(diskonAmount)
+		// 		diskonValue = float64(menu.Diskon.NilaiDiskon)
+		// 		potonganHarga = diskonAmount
+		// 	} else if menu.Diskon.JenisDiskon == "Nominal" {
+		// 		finalPrice = menu.Price - menu.Diskon.NilaiDiskon
+		// 		if finalPrice < 0 {
+		// 			finalPrice = 0
+		// 		}
+		// 		diskonValue = float64(menu.Diskon.NilaiDiskon)
+		// 		potonganHarga = float64(menu.Diskon.NilaiDiskon)
+		// 	}
+		// }
+
+		pemesanans = append(pemesanans, map[string]interface{}{
+			"fullname":          pemesanan.Fullname,
+			"email":             pemesanan.Email,
+			"phone_number":      pemesanan.PhoneNumber,
+			"design_type":       pemesanan.DesignType,
+			"order_description": pemesanan.OrderDescription,
+			// "image":             imageUrls,
+		})
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Data menu berhasil diambil",
+		"data":    pemesanans,
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)

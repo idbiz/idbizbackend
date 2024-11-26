@@ -183,9 +183,13 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/resend":
 		controller.ResendPasswordHandler(w, r)
 
-	// Pemesanan
+	// PEMESANAN
+	// Insert Pemesanan
 	case method == "POST" && path == "/create/pemesanan":
 		controller.CreatePemesanan(w, r)
+	// Update Pemesanan
+	case method == "GET" && path == "/pemesanan":
+		controller.GetAllPemesanan(w, r)
 	// Google Auth
 	default:
 		controller.NotFound(w, r)
