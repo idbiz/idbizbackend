@@ -1,14 +1,11 @@
 package controller
 
 import (
-	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
-	"github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -40,42 +37,42 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	file, header, err := req.FormFile("uploadReferences")
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Gambar tidak ditemukan"
-		at.WriteJSON(respw, http.StatusBadRequest, respn)
-		return
-	}
-	defer file.Close()
+	// file, header, err := req.FormFile("uploadReferences")
+	// if err != nil {
+	// 	var respn model.Response
+	// 	respn.Status = "Error: Gambar tidak ditemukan"
+	// 	at.WriteJSON(respw, http.StatusBadRequest, respn)
+	// 	return
+	// }
+	// defer file.Close()
 
-	fileContent, err := io.ReadAll(file)
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Gagal membaca file"
-		at.WriteJSON(respw, http.StatusInternalServerError, respn)
-		return
-	}
+	// fileContent, err := io.ReadAll(file)
+	// if err != nil {
+	// 	var respn model.Response
+	// 	respn.Status = "Error: Gagal membaca file"
+	// 	at.WriteJSON(respw, http.StatusInternalServerError, respn)
+	// 	return
+	// }
 
-	hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
-	GitHubAccessToken := config.GHAccessToken
-	GitHubAuthorName := "Rolly Maulana Awangga"
-	GitHubAuthorEmail := "awangga@gmail.com"
-	githubOrg := "idbiz"
-	githubRepo := "img"
-	pathFile := "uploadReferences/" + hashedFileName
-	replace := true
+	// hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
+	// GitHubAccessToken := config.GHAccessToken
+	// GitHubAuthorName := "Rolly Maulana Awangga"
+	// GitHubAuthorEmail := "awangga@gmail.com"
+	// githubOrg := "idbiz"
+	// githubRepo := "img"
+	// // pathFile := "uploadReferences/" + hashedFileName
+	// replace := true
 
-	content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Gagal mengupload gambar ke GitHub"
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusInternalServerError, respn)
-		return
-	}
+	// content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
+	// if err != nil {
+	// 	var respn model.Response
+	// 	respn.Status = "Error: Gagal mengupload gambar ke GitHub"
+	// 	respn.Response = err.Error()
+	// 	at.WriteJSON(respw, http.StatusInternalServerError, respn)
+	// 	return
+	// }
 
-	gambarURL := *content.Content.HTMLURL
+	// gambarURL := *content.Content.HTMLURL
 
 	Fullname := req.FormValue("fullname")
 	Email := req.FormValue("email")
@@ -84,10 +81,10 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 	OrderDescription := req.FormValue("order_description")
 
 	PemesananInput := model.Pemesanan{
-		Fullname:         Fullname,
-		Email:            Email,
-		PhoneNumber:      PhoneNumber,
-		UploadReferences: gambarURL,
+		Fullname:    Fullname,
+		Email:       Email,
+		PhoneNumber: PhoneNumber,
+		// UploadReferences: gambarURL,
 		DesignType:       DesignType,
 		OrderDescription: OrderDescription,
 	}
@@ -144,7 +141,7 @@ func GetPemesananById(respw http.ResponseWriter, req *http.Request) {
 		PhoneNumber:      dataPemesanan.PhoneNumber,
 		DesignType:       dataPemesanan.DesignType,
 		OrderDescription: dataPemesanan.OrderDescription,
-		UploadReferences: dataPemesanan.UploadReferences,
+		// UploadReferences: dataPemesanan.UploadReferences,
 	}
 
 	response := map[string]interface{}{
