@@ -187,9 +187,12 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Insert Pemesanan
 	case method == "POST" && path == "/create/pemesanan":
 		controller.CreatePemesanan(w, r)
-	// Update Pemesanan
+	// All Pemesanan
 	case method == "GET" && path == "/pemesanan":
 		controller.GetAllPemesanan(w, r)
+		// Get Pemesanan By Id
+	case method == "GET" && path == "/menu-id":
+		controller.GetPemesananById(w, r)
 	// Google Auth
 	default:
 		controller.NotFound(w, r)

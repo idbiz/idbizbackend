@@ -10,8 +10,8 @@ import (
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 )
 
 func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -110,73 +110,49 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-// Update
-// func GetDataPemesanan(respw http.ResponseWriter, req *http.Request) {
-// 	// Tambah validasi akses token
-// 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-// 	if err != nil {
-// 		_, err = watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: Token Tidak Valid"
-// 			respn.Response = err.Error()
-// 			at.WriteJSON(respw, http.StatusForbidden, respn)
-// 			return
-// 		}
-// 	}
+// Get Pemesanan By Id
+func GetPemesananById(respw http.ResponseWriter, req *http.Request) {
+	pemesananID := req.URL.Query().Get("id")
+	if pemesananID == "" {
+		var respn model.Response
+		respn.Status = "Error: ID pemesanan tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
 
-// 	data, err := atdb.GetAllDoc[[]model.Pemesanan](config.Mongoconn, "pemesanan", primitive.M{"name": "Sayur Lodeh Gaming"})
-// 	if err != nil {
-// 		var respn model.Response
-// 		respn.Status = "Error: Data menu tidak ditemukan"
-// 		respn.Response = err.Error()
-// 		at.WriteJSON(respw, http.StatusNotFound, respn)
-// 		return
-// 	}
-
-// 	if len(data) == 0 {
-// 		var respn model.Response
-// 		respn.Status = "Error: Data menu kosong"
-// 		at.WriteJSON(respw, http.StatusNotFound, respn)
-// 		return
-// 	}
-
-// 	// Jika data ditemukan, kirimkan data dalam bentuk JSON
-// 	at.WriteJSON(respw, http.StatusOK, data)
-// }
-
-func GetDataPemesanan(respw http.ResponseWriter, req *http.Request) {
-	// Tambah validasi akses token
-	// _, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	// if err != nil {
-	// 	_, err = watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Token Tidak Valid"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 		return
-	// 	}
-	// }
-
-	data, err := atdb.GetAllDoc[[]model.Pemesanan](config.Mongoconn, "pemesanan", primitive.M{"design_type": "Banner Design"})
+	objectID, err := primitive.ObjectIDFromHex(pemesananID)
 	if err != nil {
 		var respn model.Response
-		respn.Status = "Error: Data pemesanan tidak ditemukan"
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusNotFound, respn)
+		respn.Status = "Error: ID pemesanan tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
 		return
 	}
 
-	if len(data) == 0 {
+	filter := bson.M{"_id": objectID}
+	dataPemesanan, err := atdb.GetOneDoc[model.Pemesanan](config.Mongoconn, "pemesanan", filter)
+	if err != nil {
 		var respn model.Response
-		respn.Status = "Error: Data pemesanan kosong"
+		respn.Status = "Error: Pemesanan tidak ditemukan"
 		at.WriteJSON(respw, http.StatusNotFound, respn)
 		return
 	}
 
-	// Jika data ditemukan, kirimkan data dalam bentuk JSON
-	at.WriteJSON(respw, http.StatusOK, data)
+	data := model.Pemesanan{
+		ID:               dataPemesanan.ID,
+		Fullname:         dataPemesanan.Fullname,
+		Email:            dataPemesanan.Email,
+		PhoneNumber:      dataPemesanan.PhoneNumber,
+		DesignType:       dataPemesanan.DesignType,
+		OrderDescription: dataPemesanan.OrderDescription,
+		UploadReferences: dataPemesanan.UploadReferences,
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Pemesanan ditemukan",
+		"data":    data,
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
 }
 
 // Get All Pemesanan
