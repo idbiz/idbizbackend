@@ -190,11 +190,13 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// All Pemesanan
 	case method == "GET" && path == "/pemesanan":
 		controller.GetAllPemesanan(w, r)
-		// Get Pemesanan By Id
+	// Get Pemesanan By Id
 	case method == "GET" && path == "/pemesanan/id":
 		controller.GetPemesananById(w, r)
+	// Delete Pemesanan
 	case method == "DELETE" && path == "/pemesanan/delete":
 		controller.DeleteDataPemesanan(w, r)
+
 	// Google Auth
 	default:
 		controller.NotFound(w, r)

@@ -320,48 +320,6 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 // 		}
 // 	}
 
-// 	updateFields := bson.M{
-// 		"fullname":          pemesananFullname,
-// 		"email":             pemesananEmail,
-// 		"phone_number":      pemesananPhoneNumber,
-// 		"design_type":       pemesananDesignType,
-// 		"order_description": pemesananOrderDescription,
-// 		"upload_references": pemesananUploadReferences,
-// 	}
-
-// 	if categoryID != "" {
-// 		updateFields["category"] = existingCategory
-// 	}
-
-// 	_, err = atdb.UpdateOneDoc(config.Mongoconn, "menu", filter, updateFields)
-// 	if err != nil {
-// 		var respn model.Response
-// 		respn.Status = "Error: Gagal mengupdate data pemesanan di database"
-// 		respn.Response = err.Error()
-// 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
-// 		return
-// 	}
-
-// 	response := map[string]interface{}{
-// 		"status":  "success",
-// 		"message": "Pemesanan berhasil diperbarui",
-// 		"data": map[string]interface{}{
-// 			// "nama":    payload.Alias,
-// 			"menu_id":           objectID.Hex(),
-// 			"fullname":          pemesananFullname,
-// 			"email":             pemesananEmail,
-// 			"phone_number":      pemesananPhoneNumber,
-// 			"design_type":       pemesananDesignType,
-// 			"order_description": pemesananOrderDescription,
-// 			"image":   menuImageURL,
-// 			"category": map[string]interface{}{
-// 				"id":            existingCategory.ID.Hex(),
-// 				"name_category": existingCategory.CategoryName,
-// 			},
-// 		},
-// 	}
-// 	at.WriteJSON(respw, http.StatusOK, response)
-// }
 
 func DeleteDataPemesanan(respw http.ResponseWriter, req *http.Request) {
 	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
