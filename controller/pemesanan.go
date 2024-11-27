@@ -87,9 +87,9 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 		Fullname:    Fullname,
 		Email:       Email,
 		PhoneNumber: PhoneNumber,
-		// UploadReferences: gambarURL,
 		DesignType:       DesignType,
 		OrderDescription: OrderDescription,
+		// UploadReferences: gambarURL,
 	}
 
 	dataPemesanan, err := atdb.InsertOneDoc(config.Mongoconn, "pemesanan", PemesananInput)
@@ -209,117 +209,6 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
-
-// func UpdateDataPemesanan(respw http.ResponseWriter, req *http.Request) {
-// 	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-// 	if err != nil {
-// 		payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: Token Tidak Valid"
-// 			respn.Response = err.Error()
-// 			at.WriteJSON(respw, http.StatusForbidden, respn)
-// 			return
-// 		}
-// 	}
-
-// 	pemesananID := req.URL.Query().Get("id")
-// 	if pemesananID == "" {
-// 		var respn model.Response
-// 		respn.Status = "Error: ID Menu tidak ditemukan"
-// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
-// 		return
-// 	}
-
-// 	objectID, err := primitive.ObjectIDFromHex(pemesananID)
-// 	if err != nil {
-// 		var respn model.Response
-// 		respn.Status = "Error: ID Menu tidak valid"
-// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
-// 		return
-// 	}
-
-// 	filter := bson.M{"_id": objectID}
-// 	dataPemesanan, err := atdb.GetOneDoc[model.Pemesanan](config.Mongoconn, "pemesanan", filter)
-// 	if err != nil {
-// 		var respn model.Response
-// 		respn.Status = "Error: Pemesanan tidak ditemukan"
-// 		respn.Response = err.Error()
-// 		at.WriteJSON(respw, http.StatusNotFound, respn)
-// 		return
-// 	}
-
-// 	err = req.ParseMultipartForm(10 << 20)
-// 	if err != nil {
-// 		var respn model.Response
-// 		respn.Status = "Error: Gagal memproses form data"
-// 		respn.Response = err.Error()
-// 		at.WriteJSON(respw, http.StatusBadRequest, respn)
-// 		return
-// 	}
-
-// 	var menuImageURL string = dataMenu.Image
-// 	file, header, err := req.FormFile("menuImage")
-// 	if err == nil {
-// 		defer file.Close()
-// 		fileContent, err := io.ReadAll(file)
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: Gagal membaca file"
-// 			at.WriteJSON(respw, http.StatusInternalServerError, respn)
-// 			return
-// 		}
-
-// 		hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
-// 		GitHubAccessToken := config.GHAccessToken
-// 		GitHubAuthorName := "Rolly Maulana Awangga"
-// 		GitHubAuthorEmail := "awangga@gmail.com"
-// 		githubOrg := "idbiz"
-// 		githubRepo := "img"
-// 		pathFile := "menuImages/" + hashedFileName
-// 		replace := true
-
-// 		content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: Gagal mengupload gambar ke GitHub"
-// 			respn.Response = err.Error()
-// 			at.WriteJSON(respw, http.StatusInternalServerError, respn)
-// 			return
-// 		}
-
-// 		menuImageURL = *content.Content.HTMLURL
-// 	}
-
-// 	pemesananFullname := req.FormValue("fullname")
-// 	pemesananEmail := req.FormValue("email")
-// 	pemesananPhoneNumber := req.FormValue("phone_number")
-// 	pemesananDesignType := req.FormValue("design_type")
-// 	pemesananOrderDescription := req.FormValue("order_description")
-// 	pemesananUploadReferences := req.FormValue("upload_references")
-
-// 	// Ambil data kategori berdasarkan ID jika diberikan
-// 	var existingCategory model.Category
-// 	if categoryID != "" {
-// 		categoryObjID, err := primitive.ObjectIDFromHex(categoryID)
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: ID Kategori tidak valid"
-// 			respn.Response = err.Error()
-// 			at.WriteJSON(respw, http.StatusBadRequest, respn)
-// 			return
-// 		}
-// 		categoryFilter := bson.M{"_id": categoryObjID}
-// 		existingCategory, err = atdb.GetOneDoc[model.Category](config.Mongoconn, "category", categoryFilter)
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: Kategori tidak ditemukan"
-// 			respn.Response = err.Error()
-// 			at.WriteJSON(respw, http.StatusNotFound, respn)
-// 			return
-// 		}
-// 	}
-
 
 func DeleteDataPemesanan(respw http.ResponseWriter, req *http.Request) {
 	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
