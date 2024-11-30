@@ -618,3 +618,59 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
+	var userRequest model.Userdomyikado
+
+	if err := json.NewDecoder(r.Body).Decode(&userRequest); err != nil {
+		response := model.Response{
+			Status:   "Invalid Request",
+			Response: err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusBadRequest, response)
+		return
+	}
+
+	var storedUser model.Userdomyikado
+	err := config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Toko tidak ditemukan",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(userRequest.Password))
+	if err != nil {
+		response := model.Response{
+			Status:   "Failed to verify password",
+			Response: "Invalid password",
+		}
+		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		return
+	}
+
+	encryptedToken, err := watoken.EncodeforHours(storedUser.PhoneNumber, storedUser.Name, config.PRIVATEKEY, 18)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: token gagal generate"
+		respn.Response = ", Error: " + err.Error()
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message": "Login successful",
+		"name":    storedUser.Name,
+		"email":   storedUser.Email,
+		"phone":   storedUser.PhoneNumber,
+		"team":    storedUser.Team,
+		"scope":   storedUser.Scope,
+		"token":   encryptedToken,
+		"antrian": storedUser.JumlahAntrian,
+	}
+
+	at.WriteJSON(respw, http.StatusOK, response)
+}
