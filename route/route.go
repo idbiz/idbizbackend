@@ -184,6 +184,11 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/resend":
 		controller.ResendPasswordHandler(w, r)
 
+	// AUTH
+	// Register
+	case method == "POST" && path == "/auth/register":
+		controller.CreatePembayaran(w, r)
+
 	// PEMESANAN
 	// Insert Pemesanan
 	case method == "POST" && path == "/create/pemesanan":
@@ -202,7 +207,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Insert Pembayaran
 	case method == "POST" && path == "/create/pembayaran":
 		controller.CreatePembayaran(w, r)
-	// Get transaksi pembayaran by id
+		// Get transaksi pembayaran by id
 	case method == "GET" && path == "/pembayaran/id":
 		controller.GetPembayaranById(w, r)
 
