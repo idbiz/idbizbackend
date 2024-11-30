@@ -92,6 +92,7 @@ type Userdomyikado struct {
 	Name                 string             `bson:"name,omitempty" json:"name,omitempty"`
 	PhoneNumber          string             `bson:"phonenumber,omitempty" json:"phonenumber,omitempty"`
 	Email                string             `bson:"email,omitempty" json:"email,omitempty"`
+	Role				 string				`bson:"role,omitempty" json:"role,omitempty"`
 	NIK                  string             `bson:"nik,omitempty" json:"nik,omitempty"`
 	Pekerjaan            string             `bson:"pekerjaan,omitempty" json:"pekerjaan,omitempty"`
 	AlamatRumah          string             `bson:"alamatrumah,omitempty" json:"alamatrumah,omitempty"`

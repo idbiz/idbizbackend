@@ -546,3 +546,91 @@ func ResendPasswordHandler(respw http.ResponseWriter, r *http.Request) {
 	// Send the random password via WhatsApp
 	auth.SendWhatsAppPassword(respw, request.PhoneNumber, randomPassword)
 }
+
+func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
+	var request model.Userdomyikado
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		respn := model.Response {
+			Status: "Invalid Request",
+			Response: err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	re := regexp.MustCompile(`^62\d{9,15}$`)
+	if !re.MatchString(request.PhoneNumber) {
+		respn := model.Response {
+			Status: "Bad Request",
+			Response: "Invalid phone number format",
+		}
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(request.Password)
+	if err != nil {
+		respn := model.Response {
+			Status: "Failed to hash password",
+			Response: err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+
+	role := request.Role
+	if role == "" {
+		role = "user"
+	}
+}
+
+// func GetMenu(respw http.ResponseWriter, req *http.Request) {
+// 	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+
+// 	if err != nil {
+// 		payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+
+// 		if err != nil {
+// 			var respn model.Response
+// 			respn.Status = "Error: Token Tidak Valid"
+// 			respn.Info = at.GetSecretFromHeader(req)
+// 			respn.Location = "Decode Token Error"
+// 			respn.Response = err.Error()
+// 			at.WriteJSON(respw, http.StatusForbidden, respn)
+// 			return
+// 		}
+// 	}
+
+// 	var datauser model.Userdomyikado
+// 	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phonenumber": payload.Id}).Decode(&datauser)
+// 	if err != nil {
+// 		var respn model.Response
+// 		respn.Status = "Error: User tidak ditemukan"
+// 		respn.Response = "User with the provided role ID not found"
+// 		at.WriteJSON(respw, http.StatusNotFound, respn)
+// 		return
+// 	}
+
+// 	if datauser.Role == "user" {
+// 		response := map[string]interface{}{
+// 			"message": "Menu for user",
+// 			"menu":    "/user",
+// 		}
+// 		at.WriteJSON(respw, http.StatusOK, response)
+// 		return
+// 	} else if datauser.Role == "admin" {
+// 		response := map[string]interface{}{
+// 			"message": "Menu for admin",
+// 			"menu":    "/admin",
+// 		}
+// 		at.WriteJSON(respw, http.StatusOK, response)
+// 		return
+// 	} else {
+// 		response := map[string]interface{}{
+// 			"message": "Role not recognized",
+// 			"menu":    "/505",
+// 		}
+// 		at.WriteJSON(respw, http.StatusForbidden, response)
+// 		return
+// 	}
+// }
