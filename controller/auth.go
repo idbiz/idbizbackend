@@ -549,9 +549,10 @@ func ResendPasswordHandler(respw http.ResponseWriter, r *http.Request) {
 
 func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 	var request model.Userdomyikado
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		respn := model.Response {
-			Status: "Invalid Request",
+		respn := model.Response{
+			Status:   "Invalid Request",
 			Response: err.Error(),
 		}
 		at.WriteJSON(respw, http.StatusBadRequest, respn)
@@ -560,8 +561,8 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 
 	re := regexp.MustCompile(`^62\d{9,15}$`)
 	if !re.MatchString(request.PhoneNumber) {
-		respn := model.Response {
-			Status: "Bad Request",
+		respn := model.Response{
+			Status:   "Bad Request",
 			Response: "Invalid phone number format",
 		}
 		at.WriteJSON(respw, http.StatusBadRequest, respn)
@@ -570,8 +571,8 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := auth.HashPassword(request.Password)
 	if err != nil {
-		respn := model.Response {
-			Status: "Failed to hash password",
+		respn := model.Response{
+			Status:   "Failed to hash password",
 			Response: err.Error(),
 		}
 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
@@ -582,55 +583,38 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 	if role == "" {
 		role = "user"
 	}
+	newUser := model.Userdomyikado{
+		Name:          request.Name,
+		PhoneNumber:   request.PhoneNumber,
+		Email:         request.Email,
+		Team:          "pd.my.id",
+		Scope:         "dev",
+		LinkedDevice:  "v4.public.eyJhbGlhcyI6IlJvbGx5IE1hdWxhbmEgQXdhbmdnYSIsImV4cCI6IjIwMjktMDgtMDlUMTQ6MzQ6MjlaIiwiaWF0IjoiMjAyNC0wOC0wOVQwODozNDoyOVoiLCJpZCI6IjYyODEzMTIwMDAzMDAiLCJuYmYiOiIyMDI0LTA4LTA5VDA4OjM0OjI5WiJ9FXnQi5vnQ7YXHteepJ14Xcc-wPc0PLQ0n4LSbGFijfdkStVeD6QIDuwQGeaq7xETWmmtFXjfkmmfDG0WHmAlBA",
+		JumlahAntrian: 7,
+		Password:      hashedPassword,
+		Role:          role,
+	}
+
+	_, err = atdb.InsertOneDoc(config.Mongoconn, "user", newUser)
+	if err != nil {
+		respn := model.Response{
+			Status:   "Failed to insert new user",
+			Response: err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message":       "New user created successfully",
+		"name":          newUser.Name,
+		"phonenumber":   newUser.PhoneNumber,
+		"email":         newUser.Email,
+		"team":          newUser.Team,
+		"scope":         newUser.Scope,
+		"jumlahAntrian": newUser.JumlahAntrian,
+		"role":          newUser.Role,
+	}
+
+	at.WriteJSON(respw, http.StatusOK, response)
 }
-
-// func GetMenu(respw http.ResponseWriter, req *http.Request) {
-// 	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-
-// 	if err != nil {
-// 		payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-
-// 		if err != nil {
-// 			var respn model.Response
-// 			respn.Status = "Error: Token Tidak Valid"
-// 			respn.Info = at.GetSecretFromHeader(req)
-// 			respn.Location = "Decode Token Error"
-// 			respn.Response = err.Error()
-// 			at.WriteJSON(respw, http.StatusForbidden, respn)
-// 			return
-// 		}
-// 	}
-
-// 	var datauser model.Userdomyikado
-// 	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phonenumber": payload.Id}).Decode(&datauser)
-// 	if err != nil {
-// 		var respn model.Response
-// 		respn.Status = "Error: User tidak ditemukan"
-// 		respn.Response = "User with the provided role ID not found"
-// 		at.WriteJSON(respw, http.StatusNotFound, respn)
-// 		return
-// 	}
-
-// 	if datauser.Role == "user" {
-// 		response := map[string]interface{}{
-// 			"message": "Menu for user",
-// 			"menu":    "/user",
-// 		}
-// 		at.WriteJSON(respw, http.StatusOK, response)
-// 		return
-// 	} else if datauser.Role == "admin" {
-// 		response := map[string]interface{}{
-// 			"message": "Menu for admin",
-// 			"menu":    "/admin",
-// 		}
-// 		at.WriteJSON(respw, http.StatusOK, response)
-// 		return
-// 	} else {
-// 		response := map[string]interface{}{
-// 			"message": "Role not recognized",
-// 			"menu":    "/505",
-// 		}
-// 		at.WriteJSON(respw, http.StatusForbidden, response)
-// 		return
-// 	}
-// }
