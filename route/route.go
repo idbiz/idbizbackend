@@ -197,6 +197,11 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "DELETE" && path == "/pemesanan/delete":
 		controller.DeleteDataPemesanan(w, r)
 
+		// PEMBAYARAN
+	// Insert Pembayaran
+	case method == "POST" && path == "/create/pembayaran":
+		controller.CreatePembayaran(w, r)
+
 	//Geo
 	case method == "POST" && path == "/geo/roads":
 		controller.GetRoads(w, r)
