@@ -14,6 +14,7 @@ var mongoinfo = atdb.DBInfo{
 
 var Mongoconn, ErrorMongoconn = atdb.MongoConnect(mongoinfo)
 
+// Geospacial Database
 var MongoStringGeo string = "mongodb+srv://idbiz:idbizcroot@geoidbiz.z4wo4.mongodb.net/?retryWrites=true&w=majority&appName=geoidbiz"
 
 var mongoinfoGeo = atdb.DBInfo{
