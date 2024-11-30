@@ -6,6 +6,7 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/controller"
 	"github.com/gocroot/helper/at"
+
 )
 
 func URL(w http.ResponseWriter, r *http.Request) {
@@ -201,6 +202,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Insert Pembayaran
 	case method == "POST" && path == "/create/pembayaran":
 		controller.CreatePembayaran(w, r)
+	// Get transaksi pembayaran by id
+	case method == "GET" && path == "/pembayaran/id":
+		controller.GetPembayaranById(w, r)
 
 	//Geo
 	case method == "POST" && path == "/geo/roads":

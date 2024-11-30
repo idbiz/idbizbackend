@@ -7,6 +7,9 @@ import (
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 func CreatePembayaran(respw http.ResponseWriter, req *http.Request) {
@@ -38,14 +41,14 @@ func CreatePembayaran(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Buat objek untuk disimpan
-	PembayaranInput := model.Pemesanan{
-		// DesignSelected:   DesignSelected,
-		// OrderDescription: OrderDescription,
-		// CardFullname:     CardFullname,
-		// CardNumber:       CardNumber,
-		// CardExpiration: CardExpiration,
-		// CVV:              CVV,
-		// Price:            Price,
+	PembayaranInput := model.Pembayaran{
+		DesignSelected:   DesignSelected,
+		OrderDescription: OrderDescription,
+		CardFullname:     CardFullname,
+		CardNumber:       CardNumber,
+		CardExpiration:   CardExpiration,
+		CVV:              CVV,
+		Price:            Price,
 	}
 
 	// Masukkan ke database
@@ -61,9 +64,55 @@ func CreatePembayaran(respw http.ResponseWriter, req *http.Request) {
 	// Respons sukses
 	response := map[string]interface{}{
 		"status":  "success",
-		"message": "Pemesanan berhasil ditambahkan",
+		"message": "Transaksi pembayaran berhasil",
 		"data":    dataPembayaran,
 	}
 
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+// Get Pemesanan By Id
+func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
+	pembayaranID := req.URL.Query().Get("id")
+	if pembayaranID == "" {
+		var respn model.Response
+		respn.Status = "Error: ID transaksi tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(pembayaranID)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: ID transaksi tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	filter := bson.M{"_id": objectID}
+	dataPembayaran, err := atdb.GetOneDoc[model.Pembayaran](config.Mongoconn, "pembayaran", filter)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: transaksi tidak ditemukan"
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	data := model.Pembayaran{
+		ID:               dataPembayaran.ID,
+		DesignSelected:   dataPembayaran.DesignSelected,
+		OrderDescription: dataPembayaran.OrderDescription,
+		CardFullname:     dataPembayaran.CardFullname,
+		CardNumber:       dataPembayaran.CardNumber,
+		CardExpiration:   dataPembayaran.CardExpiration,
+		CVV:              dataPembayaran.CVV,
+		Price:            dataPembayaran.Price,
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Transaksi ditemukan",
+		"data":    data,
+	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
