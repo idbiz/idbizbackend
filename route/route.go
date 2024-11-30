@@ -187,7 +187,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// AUTH
 	// Register
 	case method == "POST" && path == "/auth/register":
-		controller.CreatePembayaran(w, r)
+		controller.RegisterAkunDesigner(w, r)
 
 	// PEMESANAN
 	// Insert Pemesanan
