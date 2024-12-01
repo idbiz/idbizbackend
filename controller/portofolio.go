@@ -21,7 +21,7 @@ import (
 	// "github.com/gocroot/helper/gcallapi"
 	// "github.com/gocroot/helper/lms"
 	// "github.com/gocroot/helper/report"
-	"github.com/gocroot/helper/watoken"
+	// "github.com/gocroot/helper/watoken"
 	// "github.com/gocroot/helper/whatsauth"
 )
 
@@ -29,25 +29,25 @@ import (
 func CreatePortofolio(w http.ResponseWriter, r *http.Request) {
 	var request model.Userdomyikado
 	var portofolio model.Portofolio
-	var respn model.Response
-	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
-	if err != nil {
-		respn.Status = "Error : Token Tidak Valid"
-		respn.Info = at.GetSecretFromHeader(r)
-		respn.Location = "Decode Token Error"
-		respn.Response = err.Error()
-		at.WriteJSON(w, http.StatusForbidden, respn)
-		return
-	}
+	// var respn model.Response
+	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
+	// if err != nil {
+	// 	respn.Status = "Error : Token Tidak Valid"
+	// 	respn.Info = at.GetSecretFromHeader(r)
+	// 	respn.Location = "Decode Token Error"
+	// 	respn.Response = err.Error()
+	// 	at.WriteJSON(w, http.StatusForbidden, respn)
+	// 	return
+	// }
 	
-	//check eksistensi user
-	docuser, err := atdb.GetOneDoc[model.Userdomyikado](config.Mongoconn, "user", primitive.M{"phonenumber": payload.Id})
-	if err != nil {
-		docuser.PhoneNumber = payload.Id
-		docuser.Name = payload.Alias
-		at.WriteJSON(w, http.StatusNotFound, docuser)
-		return
-	}
+	// //check eksistensi user
+	// docuser, err := atdb.GetOneDoc[model.Userdomyikado](config.Mongoconn, "user", primitive.M{"phonenumber": payload.Id})
+	// if err != nil {
+	// 	docuser.PhoneNumber = payload.Id
+	// 	docuser.Name = payload.Alias
+	// 	at.WriteJSON(w, http.StatusNotFound, docuser)
+	// 	return
+	// }
 
 	role := request.Role
 	if role != "user" {
