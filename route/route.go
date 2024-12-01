@@ -188,6 +188,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Register
 	case method == "POST" && path == "/auth/register":
 		controller.RegisterAkunDesigner(w, r)
+	case method == "POST" && path == "/auth/login/form":
+		controller.LoginAkunDesigner(w, r)
 
 	// PEMESANAN
 	// Insert Pemesanan

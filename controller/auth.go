@@ -632,7 +632,7 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 	}
 
 	var storedUser model.Userdomyikado
-	err := config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
+	err := config.Mongoconn.Collection("users").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
 	if err != nil {
 		response := model.Response{
 			Status:   "Error: Toko tidak ditemukan",
