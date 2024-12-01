@@ -80,14 +80,14 @@ func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
 	Fullname := req.FormValue("fullname")
 	Email := req.FormValue("email")
 	PhoneNumber := req.FormValue("phone_number")
-	// DesignCategory := req.FormValue("category")
+	Category := req.FormValue("category")
 	OrderDescription := req.FormValue("order_description")
 
 	PemesananInput := model.Pemesanan{
 		Fullname:         Fullname,
 		Email:            Email,
 		PhoneNumber:      PhoneNumber,
-		Category:         model.DesignCategory{},
+		Category:         model.DesignCategory{Category: Category},
 		OrderDescription: OrderDescription,
 		// UploadReferences: gambarURL,
 	}
