@@ -12,7 +12,7 @@ import (
 
 )
 
-func CreatePembayaran(respw http.ResponseWriter, req *http.Request) {
+func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 	// Parse form data
 	err := req.ParseForm()
 	if err != nil {

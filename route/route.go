@@ -191,10 +191,16 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/login/form":
 		controller.LoginAkunDesigner(w, r)
 
+	// CATEGORY
+	// Design Category
+	case method == "POST" && path == "/insert/design-category":
+		controller.InsertDesignCategory(w, r)
+
+		
 	// PEMESANAN
 	// Insert Pemesanan
-	case method == "POST" && path == "/create/pemesanan":
-		controller.CreatePemesanan(w, r)
+	case method == "POST" && path == "/insert/pemesanan":
+		controller.InsertPemesanan(w, r)
 	// All Pemesanan
 	case method == "GET" && path == "/pemesanan":
 		controller.GetAllPemesanan(w, r)
@@ -205,17 +211,21 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "DELETE" && path == "/pemesanan/delete":
 		controller.DeleteDataPemesanan(w, r)
 
-		// PEMBAYARAN
+
+	// PEMBAYARAN
 	// Insert Pembayaran
-	case method == "POST" && path == "/create/pembayaran":
-		controller.CreatePembayaran(w, r)
-		// Get transaksi pembayaran by id
+	case method == "POST" && path == "/insert/pembayaran":
+		controller.InsertPembayaran(w, r)
+	// Get transaksi pembayaran by id
 	case method == "GET" && path == "/pembayaran/id":
 		controller.GetPembayaranById(w, r)
 
-	//Geo
+
+	//GEO
+	// Roads
 	case method == "POST" && path == "/geo/roads":
 		controller.GetRoads(w, r)
+	// Region
 	case method == "POST" && path == "/geo/region":
 		controller.GetRegion(w, r)
 

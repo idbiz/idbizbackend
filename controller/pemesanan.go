@@ -14,7 +14,7 @@ import (
 
 )
 
-func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
+func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
 	// _, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 
 	// if err != nil {
@@ -80,14 +80,14 @@ func CreatePemesanan(respw http.ResponseWriter, req *http.Request) {
 	Fullname := req.FormValue("fullname")
 	Email := req.FormValue("email")
 	PhoneNumber := req.FormValue("phone_number")
-	DesignType := req.FormValue("design_type")
+	// DesignType := req.FormValue("design_type")
 	OrderDescription := req.FormValue("order_description")
 
 	PemesananInput := model.Pemesanan{
-		Fullname:    Fullname,
-		Email:       Email,
-		PhoneNumber: PhoneNumber,
-		DesignType:       DesignType,
+		Fullname:         Fullname,
+		Email:            Email,
+		PhoneNumber:      PhoneNumber,
+		Category:         model.DesignCategory{},
 		OrderDescription: OrderDescription,
 		// UploadReferences: gambarURL,
 	}
@@ -142,7 +142,7 @@ func GetPemesananById(respw http.ResponseWriter, req *http.Request) {
 		Fullname:         dataPemesanan.Fullname,
 		Email:            dataPemesanan.Email,
 		PhoneNumber:      dataPemesanan.PhoneNumber,
-		DesignType:       dataPemesanan.DesignType,
+		Category:         model.DesignCategory{},
 		OrderDescription: dataPemesanan.OrderDescription,
 		// UploadReferences: dataPemesanan.UploadReferences,
 	}
@@ -195,7 +195,7 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 			"fullname":          pemesanan.Fullname,
 			"email":             pemesanan.Email,
 			"phone_number":      pemesanan.PhoneNumber,
-			"design_type":       pemesanan.DesignType,
+			"category":          model.DesignCategory{},
 			"order_description": pemesanan.OrderDescription,
 			// "image":             imageUrls,
 		})
