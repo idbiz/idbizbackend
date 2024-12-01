@@ -226,6 +226,11 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/pembayaran/id":
 		controller.GetPembayaranById(w, r)
 
+	//PORTOFOLIO
+	// Create Portofolio
+	case method == "POST" && path == "/portofolio":
+		controller.CreatePortofolio(w, r)
+
 	//GEO
 	// Roads
 	case method == "POST" && path == "/geo/roads":
