@@ -27,7 +27,6 @@ import (
 
 // Create a new portofolio
 func CreatePortofolio(w http.ResponseWriter, r *http.Request) {
-	var request model.Userdomyikado
 	var portofolio model.Portofolio
 	// var respn model.Response
 	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
@@ -49,40 +48,32 @@ func CreatePortofolio(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	role := request.Role
-	if role != "user" {
-		newPortofolio := model.Portofolio{
-			ID:          primitive.NewObjectID(),
-			DesignType:  portofolio.DesignType,
-			DesignTitle: portofolio.DesignTitle,
-			DesignDesc:  portofolio.DesignDesc,
-			DesignImage: portofolio.DesignImage,
-		}
+	newPortofolio := model.Portofolio{
+		ID:          primitive.NewObjectID(),
+		DesignType:  portofolio.DesignType,
+		DesignTitle: portofolio.DesignTitle,
+		DesignDesc:  portofolio.DesignDesc,
+		DesignImage: portofolio.DesignImage,
+	}
 
-		_, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", newPortofolio)
-		if err != nil {
-			resp := model.Response{
-				Status:   "Error : Gagal insert ke portofolio",
-				Response: err.Error(),
-			}
-			at.WriteJSON(w, http.StatusNotFound, resp)
-			return
-		}
-
-		response := map[string]interface{}{
-			"message": "Portofolio berhasil dibuat",
-			"judul":   newPortofolio.DesignTitle,
-			"deskripsi": newPortofolio.DesignDesc,
-			"gambar": newPortofolio.DesignImage,
-			"tipe": newPortofolio.DesignType,
-			"status":  "success",
-		}
-		at.WriteJSON(w, http.StatusOK, response)
-	} else {
+	_, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", newPortofolio)
+	if err != nil {
 		resp := model.Response{
-			Status:   "Error : Role tidak sesuai",
-			Response: "Role tidak sesuai",
+			Status:   "Error : Gagal insert ke portofolio",
+			Response: err.Error(),
 		}
 		at.WriteJSON(w, http.StatusNotFound, resp)
+		return
 	}
+
+	response := map[string]interface{}{
+		"message": "Portofolio berhasil dibuat",
+		"judul":   newPortofolio.DesignTitle,
+		"deskripsi": newPortofolio.DesignDesc,
+		"gambar": newPortofolio.DesignImage,
+		"tipe": newPortofolio.DesignType,
+		"status":  "success",
+	}
+	at.WriteJSON(w, http.StatusOK, response)
+	
 }
