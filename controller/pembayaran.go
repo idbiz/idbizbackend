@@ -42,7 +42,7 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 
 	// Buat objek untuk disimpan
 	PembayaranInput := model.Pembayaran{
-		DesignSelected:   DesignSelected,
+		// DesignSelected:   DesignSelected,
 		OrderDescription: OrderDescription,
 		CardFullname:     CardFullname,
 		CardNumber:       CardNumber,
@@ -100,7 +100,7 @@ func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
 
 	data := model.Pembayaran{
 		ID:               dataPembayaran.ID,
-		DesignSelected:   dataPembayaran.DesignSelected,
+		// DesignSelected:   dataPembayaran.DesignSelected,
 		OrderDescription: dataPembayaran.OrderDescription,
 		CardFullname:     dataPembayaran.CardFullname,
 		CardNumber:       dataPembayaran.CardNumber,

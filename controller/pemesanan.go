@@ -6,12 +6,12 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+
 	// "github.com/gocroot/helper/watoken"
 	// "github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 )
 
 func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -80,7 +80,7 @@ func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
 	Fullname := req.FormValue("fullname")
 	Email := req.FormValue("email")
 	PhoneNumber := req.FormValue("phone_number")
-	// DesignType := req.FormValue("design_type")
+	// DesignCategory := req.FormValue("category")
 	OrderDescription := req.FormValue("order_description")
 
 	PemesananInput := model.Pemesanan{
