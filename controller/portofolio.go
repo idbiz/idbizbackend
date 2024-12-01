@@ -13,7 +13,7 @@ import (
 	"github.com/gocroot/model"
 	// "github.com/whatsauth/itmodel"
 	// "go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gocroot/helper/at"
 	// "github.com/gocroot/helper/atapi"
@@ -26,8 +26,8 @@ import (
 )
 
 // Create a new portofolio
-func CreatePortofolio(w http.ResponseWriter, r *http.Request) {
-	var portofolio model.Portofolio
+func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
+	// var portofolio model.Portofolio
 	// var respn model.Response
 	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
 	// if err != nil {
@@ -48,32 +48,43 @@ func CreatePortofolio(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	newPortofolio := model.Portofolio{
-		ID:          primitive.NewObjectID(),
-		DesignType:  portofolio.DesignType,
-		DesignTitle: portofolio.DesignTitle,
-		DesignDesc:  portofolio.DesignDesc,
-		DesignImage: portofolio.DesignImage,
+	DesignType := req.FormValue("design_type")
+	DesignTitle := req.FormValue("design_title")
+	DesignDesc := req.FormValue("design_desc")
+	DesignImage := req.FormValue("design_image")
+
+	PortofolioInput := model.Portofolio{
+		DesignType: DesignType,
+		DesignTitle: DesignTitle,
+		DesignDesc: DesignDesc,
+		DesignImage: DesignImage,
 	}
 
-	_, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", newPortofolio)
+	// _, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", newPortofolio)
+	// if err != nil {
+	// 	resp := model.Response{
+	// 		Status:   "Error : Gagal insert ke portofolio",
+	// 		Response: err.Error(),
+	// 	}
+	// 	at.WriteJSON(w, http.StatusNotFound, resp)
+	// 	return
+	// }
+
+	dataPortofolio, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", PortofolioInput)
 	if err != nil {
-		resp := model.Response{
-			Status:   "Error : Gagal insert ke portofolio",
-			Response: err.Error(),
-		}
-		at.WriteJSON(w, http.StatusNotFound, resp)
+		var respn model.Response
+		respn.Status = "Gagal Insert Database"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusNotModified, respn)
 		return
 	}
 
 	response := map[string]interface{}{
 		"message": "Portofolio berhasil dibuat",
-		"judul":   newPortofolio.DesignTitle,
-		"deskripsi": newPortofolio.DesignDesc,
-		"gambar": newPortofolio.DesignImage,
-		"tipe": newPortofolio.DesignType,
 		"status":  "success",
+		"data":    dataPortofolio,
 	}
-	at.WriteJSON(w, http.StatusOK, response)
+	
+	at.WriteJSON(respw, http.StatusOK, response)
 	
 }
