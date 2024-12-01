@@ -27,26 +27,6 @@ import (
 
 // Create a new portofolio
 func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
-	// var portofolio model.Portofolio
-	// var respn model.Response
-	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
-	// if err != nil {
-	// 	respn.Status = "Error : Token Tidak Valid"
-	// 	respn.Info = at.GetSecretFromHeader(r)
-	// 	respn.Location = "Decode Token Error"
-	// 	respn.Response = err.Error()
-	// 	at.WriteJSON(w, http.StatusForbidden, respn)
-	// 	return
-	// }
-
-	// //check eksistensi user
-	// docuser, err := atdb.GetOneDoc[model.Userdomyikado](config.Mongoconn, "user", primitive.M{"phonenumber": payload.Id})
-	// if err != nil {
-	// 	docuser.PhoneNumber = payload.Id
-	// 	docuser.Name = payload.Alias
-	// 	at.WriteJSON(w, http.StatusNotFound, docuser)
-	// 	return
-	// }
 
 	Category := req.FormValue("category")
 	DesignTitle := req.FormValue("design_title")
@@ -54,21 +34,11 @@ func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
 	DesignImage := req.FormValue("design_image")
 
 	PortofolioInput := model.Portofolio{
-		Category:    model.DesignCategory{},
+		Category:   model.DesignCategory{Category: Category},
 		DesignTitle: DesignTitle,
 		DesignDesc:  DesignDesc,
 		DesignImage: DesignImage,
 	}
-
-	// _, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", newPortofolio)
-	// if err != nil {
-	// 	resp := model.Response{
-	// 		Status:   "Error : Gagal insert ke portofolio",
-	// 		Response: err.Error(),
-	// 	}
-	// 	at.WriteJSON(w, http.StatusNotFound, resp)
-	// 	return
-	// }
 
 	dataPortofolio, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", PortofolioInput)
 	if err != nil {
@@ -86,5 +56,4 @@ func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)
-
 }
