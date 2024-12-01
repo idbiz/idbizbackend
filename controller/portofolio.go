@@ -11,10 +11,10 @@ import (
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/model"
+
 	// "github.com/whatsauth/itmodel"
 	// "go.mongodb.org/mongo-driver/bson"
 	// "go.mongodb.org/mongo-driver/bson/primitive"
-
 	"github.com/gocroot/helper/at"
 	// "github.com/gocroot/helper/atapi"
 	"github.com/gocroot/helper/atdb"
@@ -38,7 +38,7 @@ func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
 	// 	at.WriteJSON(w, http.StatusForbidden, respn)
 	// 	return
 	// }
-	
+
 	// //check eksistensi user
 	// docuser, err := atdb.GetOneDoc[model.Userdomyikado](config.Mongoconn, "user", primitive.M{"phonenumber": payload.Id})
 	// if err != nil {
@@ -48,15 +48,15 @@ func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	DesignType := req.FormValue("design_type")
+	Category := req.FormValue("category")
 	DesignTitle := req.FormValue("design_title")
 	DesignDesc := req.FormValue("design_desc")
 	DesignImage := req.FormValue("design_image")
 
 	PortofolioInput := model.Portofolio{
-		DesignType: DesignType,
+		Category:    model.DesignCategory{},
 		DesignTitle: DesignTitle,
-		DesignDesc: DesignDesc,
+		DesignDesc:  DesignDesc,
 		DesignImage: DesignImage,
 	}
 
@@ -84,7 +84,7 @@ func CreatePortofolio(respw http.ResponseWriter, req *http.Request) {
 		"status":  "success",
 		"data":    dataPortofolio,
 	}
-	
+
 	at.WriteJSON(respw, http.StatusOK, response)
-	
+
 }
