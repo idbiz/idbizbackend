@@ -595,7 +595,7 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		Role:          role,
 	}
 
-	_, err = atdb.InsertOneDoc(config.Mongoconn, "user", newUser)
+	_, err = atdb.InsertOneDoc(config.Mongoconn, "users", newUser)
 	if err != nil {
 		respn := model.Response{
 			Status:   "Failed to insert new user",
