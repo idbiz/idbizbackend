@@ -6,7 +6,6 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/controller"
 	"github.com/gocroot/helper/at"
-
 )
 
 func URL(w http.ResponseWriter, r *http.Request) {
@@ -195,8 +194,16 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Design Category
 	case method == "POST" && path == "/insert/design-category":
 		controller.InsertDesignCategory(w, r)
+	// All Design Category
+	case method == "GET" && path == "/design-category":
+		controller.GetAllDesignCategory(w, r)
+	// Get Design Category By Id
+	case method == "GET" && path == "/design-category/id":
+		controller.GetDesignCategoryById(w, r)
+	// Delete Design Category
+	case method == "DELETE" && path == "/design-category/delete":
+		controller.DeleteDataDesignCategory(w, r)
 
-		
 	// PEMESANAN
 	// Insert Pemesanan
 	case method == "POST" && path == "/insert/pemesanan":
@@ -211,7 +218,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "DELETE" && path == "/pemesanan/delete":
 		controller.DeleteDataPemesanan(w, r)
 
-
 	// PEMBAYARAN
 	// Insert Pembayaran
 	case method == "POST" && path == "/insert/pembayaran":
@@ -219,7 +225,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Get transaksi pembayaran by id
 	case method == "GET" && path == "/pembayaran/id":
 		controller.GetPembayaranById(w, r)
-
 
 	//GEO
 	// Roads
