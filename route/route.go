@@ -240,10 +240,16 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/pembayaran/id":
 		controller.GetPembayaranById(w, r)
 
-	//PORTOFOLIO
-	// Create Portofolio
-	case method == "POST" && path == "/portofolio":
-		controller.CreatePortofolio(w, r)
+	//PORTFOLIO
+	// Insert Portfolio
+	case method == "POST" && path == "/insert/portofolio":
+		controller.InsertPortofolio(w, r)
+	// Get All Portfolio
+	case method == "GET" && path == "/portofolio":
+		controller.GetAllPortofolio(w, r)
+	// Get Portfolio By Id
+	case method == "GET" && path == "/portofolio/id":
+		controller.GetPortofolioById(w, r)
 
 	//GEO
 	// Roads
