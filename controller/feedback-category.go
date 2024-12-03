@@ -21,7 +21,7 @@ func InsertFeedbackCategory(respw http.ResponseWriter, req *http.Request) {
 
 	FeedbackCategory := req.FormValue("category")
 
-	CategoryInput := model.DesignCategory{
+	CategoryInput := model.FeedbackCategory{
 		Category: FeedbackCategory,
 	}
 

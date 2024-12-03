@@ -208,7 +208,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Insert Feedback Category
 	case method == "POST" && path == "/insert/feedback-category":
 		controller.InsertFeedbackCategory(w, r)
-		// All Feedback Category
+	// All Feedback Category
 	case method == "GET" && path == "/feedback-category":
 		controller.GetAllFeedbackCategory(w, r)
 	// Get Feedback Category By Id
