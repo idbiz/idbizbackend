@@ -6,12 +6,12 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
-
 	// "github.com/gocroot/helper/watoken"
 	// "github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -78,13 +78,14 @@ func GetPemesananById(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	data := model.Pemesanan{
-		ID:               dataPemesanan.ID,
-		Fullname:         dataPemesanan.Fullname,
-		Email:            dataPemesanan.Email,
-		PhoneNumber:      dataPemesanan.PhoneNumber,
-		Category:         model.DesignCategory{},
+		ID:          dataPemesanan.ID,
+		Fullname:    dataPemesanan.Fullname,
+		Email:       dataPemesanan.Email,
+		PhoneNumber: dataPemesanan.PhoneNumber,
+		// Category:         model.DesignCategory{Category: dataPemesanan.Category.Category},
+		Category:         dataPemesanan.Category,
 		OrderDescription: dataPemesanan.OrderDescription,
-		// UploadReferences: dataPemesanan.UploadReferences,
+		UploadReferences: dataPemesanan.UploadReferences,
 	}
 
 	response := map[string]interface{}{
@@ -108,36 +109,14 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 
 	var pemesanans []map[string]interface{}
 	for _, pemesanan := range data {
-		// imageUrl := strings.Replace(pemesanan.UploadReferences, "github.com", "raw.githubusercontent.com", 1)
-		// imageUrls := strings.Replace(imageUrl, "/blob/", "/", 1)
-
-		// finalPrice := menu.Price
-		// diskonValue := 0.00
-		// potonganHarga := 0.00
-
-		// if menu.Diskon != nil && menu.Diskon.Status == "Active" {
-		// 	if menu.Diskon.JenisDiskon == "Persentase" {
-		// 		diskonAmount := float64(menu.Price) * (float64(menu.Diskon.NilaiDiskon) / 100)
-		// 		finalPrice = menu.Price - int(diskonAmount)
-		// 		diskonValue = float64(menu.Diskon.NilaiDiskon)
-		// 		potonganHarga = diskonAmount
-		// 	} else if menu.Diskon.JenisDiskon == "Nominal" {
-		// 		finalPrice = menu.Price - menu.Diskon.NilaiDiskon
-		// 		if finalPrice < 0 {
-		// 			finalPrice = 0
-		// 		}
-		// 		diskonValue = float64(menu.Diskon.NilaiDiskon)
-		// 		potonganHarga = float64(menu.Diskon.NilaiDiskon)
-		// 	}
-		// }
 
 		pemesanans = append(pemesanans, map[string]interface{}{
 			"fullname":          pemesanan.Fullname,
 			"email":             pemesanan.Email,
 			"phone_number":      pemesanan.PhoneNumber,
-			"category":          model.DesignCategory{},
+			"category":          pemesanan.Category.Category,
 			"order_description": pemesanan.OrderDescription,
-			// "image":             imageUrls,
+			"upload_references": pemesanan.UploadReferences,
 		})
 	}
 
@@ -151,17 +130,6 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 }
 
 func DeleteDataPemesanan(respw http.ResponseWriter, req *http.Request) {
-	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	// if err != nil {
-	// 	payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Token Tidak Valid"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 		return
-	// 	}
-	// }
 
 	pemesananId := req.URL.Query().Get("pemesananId")
 	if pemesananId == "" {
