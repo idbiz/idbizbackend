@@ -9,7 +9,6 @@ import (
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 )
 
 // Insert Portfolio
@@ -83,7 +82,7 @@ func GetPortofolioById(respw http.ResponseWriter, req *http.Request) {
 
 	response := map[string]interface{}{
 		"status":  "success",
-		"message": "Portopolio ditemukan",
+		"message": "Portofolio ditemukan",
 		"data":    data,
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
@@ -153,8 +152,8 @@ func DeleteDataPortofolio(respw http.ResponseWriter, req *http.Request) {
 		"message": "Portofolio berhasil dihapus",
 		"data": map[string]interface{}{
 			// "user":    payload.Id,
-			"pemesanan_id": objectID.Hex(),
-			"deleted":      deleteData.DeletedCount,
+			"portofolio_id": objectID.Hex(),
+			"deleted":       deleteData.DeletedCount,
 		},
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
