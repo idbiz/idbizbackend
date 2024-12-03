@@ -190,8 +190,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/login/form":
 		controller.LoginAkunDesigner(w, r)
 
-	// CATEGORY
-	// Design Category
+	// DESIGN CATEGORY
+	// Insert Design Category
 	case method == "POST" && path == "/insert/design-category":
 		controller.InsertDesignCategory(w, r)
 	// All Design Category
@@ -203,6 +203,20 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Delete Design Category
 	case method == "DELETE" && path == "/design-category/delete":
 		controller.DeleteDataDesignCategory(w, r)
+
+	// FEEDBACK CATEGORY
+	// Insert Feedback Category
+	case method == "POST" && path == "/insert/feedback-category":
+		controller.InsertFeedbackCategory(w, r)
+		// All Feedback Category
+	case method == "GET" && path == "/feedback-category":
+		controller.GetAllFeedbackCategory(w, r)
+	// Get Feedback Category By Id
+	case method == "GET" && path == "/feedback-category/id":
+		controller.GetFeedbackCategoryById(w, r)
+	// Delete Feedback Category
+	case method == "DELETE" && path == "/feedback-category/delete":
+		controller.DeleteDataFeedbackCategory(w, r)
 
 	// PEMESANAN
 	// Insert Pemesanan

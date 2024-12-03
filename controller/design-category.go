@@ -83,7 +83,7 @@ func GetDesignCategoryById(respw http.ResponseWriter, req *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-// Get All Pemesanan
+// Get All DesignCategory
 func GetAllDesignCategory(respw http.ResponseWriter, req *http.Request) {
 	data, err := atdb.GetAllDoc[[]model.DesignCategory](config.Mongoconn, "design-category", primitive.M{})
 	if err != nil {
