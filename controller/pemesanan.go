@@ -15,73 +15,13 @@ import (
 )
 
 func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
-	// _, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-
-	// if err != nil {
-	// 	_, err = watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Token Tidak Valid"
-	// 		respn.Info = at.GetSecretFromHeader(req)
-	// 		respn.Location = "Decode Token Error"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 		return
-	// 	}
-	// }
-
-	// err = req.ParseMultipartForm(10 << 20)
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error: Gagal memproses form data"
-	// 	respn.Response = err.Error()
-	// 	at.WriteJSON(respw, http.StatusBadRequest, respn)
-	// 	return
-	// }
-
-	// file, header, err := req.FormFile("uploadReferences")
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error: Gambar tidak ditemukan"
-	// 	at.WriteJSON(respw, http.StatusBadRequest, respn)
-	// 	return
-	// }
-	// defer file.Close()
-
-	// fileContent, err := io.ReadAll(file)
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error: Gagal membaca file"
-	// 	at.WriteJSON(respw, http.StatusInternalServerError, respn)
-	// 	return
-	// }
-
-	// hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
-	// GitHubAccessToken := config.GHAccessToken
-	// GitHubAuthorName := "Rolly Maulana Awangga"
-	// GitHubAuthorEmail := "awangga@gmail.com"
-	// githubOrg := "idbiz"
-	// githubRepo := "img"
-	// // pathFile := "uploadReferences/" + hashedFileName
-	// replace := true
-
-	// content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error: Gagal mengupload gambar ke GitHub"
-	// 	respn.Response = err.Error()
-	// 	at.WriteJSON(respw, http.StatusInternalServerError, respn)
-	// 	return
-	// }
-
-	// gambarURL := *content.Content.HTMLURL
 
 	Fullname := req.FormValue("fullname")
 	Email := req.FormValue("email")
 	PhoneNumber := req.FormValue("phone_number")
 	Category := req.FormValue("category")
 	OrderDescription := req.FormValue("order_description")
+	UploadReferences := req.FormValue("upload_references")
 
 	PemesananInput := model.Pemesanan{
 		Fullname:         Fullname,
@@ -89,7 +29,7 @@ func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
 		PhoneNumber:      PhoneNumber,
 		Category:         model.DesignCategory{Category: Category},
 		OrderDescription: OrderDescription,
-		// UploadReferences: gambarURL,
+		UploadReferences: UploadReferences,
 	}
 
 	dataPemesanan, err := atdb.InsertOneDoc(config.Mongoconn, "pemesanan", PemesananInput)
