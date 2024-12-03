@@ -64,7 +64,7 @@ func GetPortofolioById(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	filter := bson.M{"_id": objectID}
-	dataPortofolio, err := atdb.GetOneDoc[model.Portofolio](config.Mongoconn, "portfolio", filter)
+	dataPortofolio, err := atdb.GetOneDoc[model.Portofolio](config.Mongoconn, "portofolio", filter)
 	if err != nil {
 		var respn model.Response
 		respn.Status = "Error: Portfolio tidak ditemukan"
@@ -117,5 +117,45 @@ func GetAllPortofolio(respw http.ResponseWriter, req *http.Request) {
 		"data":    portofolios,
 	}
 
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+func DeleteDataPortofolio(respw http.ResponseWriter, req *http.Request) {
+
+	portofolioId := req.URL.Query().Get("portofolioId")
+	if portofolioId == "" {
+		var respn model.Response
+		respn.Status = "Error: ID Portofolio tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(portofolioId)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: ID Portofolio tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	filter := bson.M{"_id": objectID}
+	deleteData, err := atdb.DeleteOneDoc(config.Mongoconn, "portofolio", filter)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal menghapus data portofolio"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Portofolio berhasil dihapus",
+		"data": map[string]interface{}{
+			// "user":    payload.Id,
+			"pemesanan_id": objectID.Hex(),
+			"deleted":      deleteData.DeletedCount,
+		},
+	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }

@@ -6,12 +6,12 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+
 	// "github.com/gocroot/helper/watoken"
 	// "github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 )
 
 func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -114,7 +114,7 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 			"fullname":          pemesanan.Fullname,
 			"email":             pemesanan.Email,
 			"phone_number":      pemesanan.PhoneNumber,
-			"category":          pemesanan.Category.Category,
+			"category":          model.DesignCategory{Category: pemesanan.Category.Category},
 			"order_description": pemesanan.OrderDescription,
 			"upload_references": pemesanan.UploadReferences,
 		})

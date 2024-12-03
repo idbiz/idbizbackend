@@ -250,6 +250,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Get Portfolio By Id
 	case method == "GET" && path == "/portofolio/id":
 		controller.GetPortofolioById(w, r)
+	// Delete PortoFolio
+	case method == "DELETE" && path == "/portofolio/delete":
+		controller.DeleteDataPortofolio(w, r)
 
 	//GEO
 	// Roads
