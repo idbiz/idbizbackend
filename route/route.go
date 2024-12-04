@@ -195,7 +195,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/auth/users/cust":
 		controller.GetAkunCustomer(w, r)
 	case method == "GET" && path == "/auth/users/cust/id":
-		controller.GetAkunCustomerByName(w, r)
+		controller.GetAkunCustomerByID(w, r)
 
 	// DESIGN CATEGORY
 	// Insert Design Category
