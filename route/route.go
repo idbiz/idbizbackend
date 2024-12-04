@@ -84,6 +84,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// order
 	case method == "POST" && at.URLParam(path, "/data/order/:namalapak"):
 		controller.HandleOrder(w, r)
+
 	//user data
 	case method == "GET" && path == "/data/user":
 		controller.GetDataUser(w, r)
@@ -168,11 +169,13 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.PostTaskList(w, r)
 	case method == "POST" && at.URLParam(path, "/webhook/nomor/:nomorwa"):
 		controller.PostInboxNomor(w, r)
+
 	// LMS
 	case method == "GET" && path == "/lms/refresh/cookie":
 		controller.RefreshLMSCookie(w, r)
 	case method == "GET" && path == "/lms/count/user":
 		controller.GetCountDocUser(w, r)
+
 	// Google Auth
 	case method == "POST" && path == "/auth/users":
 		controller.Auth(w, r)
@@ -189,6 +192,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.RegisterAkunDesigner(w, r)
 	case method == "POST" && path == "/auth/login/form":
 		controller.LoginAkunDesigner(w, r)
+	case method == "GET" && path == "/auth/users/cust":
+		controller.GetAkunCustomer(w, r)
+	case method == "GET" && path == "/auth/users/cust/id":
+		controller.GetAkunCustomerByName(w, r)
 
 	// DESIGN CATEGORY
 	// Insert Design Category
