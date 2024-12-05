@@ -674,3 +674,60 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
+	var users []model.Userdomyikado
+	cursor, err := config.Mongoconn.Collection("users").Find(context.Background(), bson.M{})
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Gagal mengambil data user",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var user model.Userdomyikado
+		cursor.Decode(&user)
+		users = append(users, user)
+	}
+
+	response := map[string]interface{}{
+		"message": "Data berhasil diambil",
+		"users":   users,
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+// fungsi get akun customer by id diambil dari token login
+func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
+	token := at.GetLoginFromHeader(r)
+	decryptedToken, err := watoken.Decode(config.PRIVATEKEY, token)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Token tidak valid",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusForbidden, response)
+		return
+	}
+
+	var user model.Userdomyikado
+	err = config.Mongoconn.Collection("users").FindOne(context.Background(), bson.M{"phonenumber": decryptedToken.Id}).Decode(&user)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: User tidak ditemukan",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message": "Data berhasil diambil",
+		"user":    user,
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
