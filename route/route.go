@@ -225,6 +225,20 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "DELETE" && path == "/feedback-category/delete":
 		controller.DeleteDataFeedbackCategory(w, r)
 
+	// FEEDBACK
+	// Insert Feedback
+	case method == "POST" && path == "/insert/feedback":
+		controller.InsertFeedback(w, r)
+	// All Feedback Category
+	case method == "GET" && path == "/feedback":
+		controller.GetAllFeedback(w, r)
+	// // Get Feedback Category By Id
+	// case method == "GET" && path == "/feedback-category/id":
+	// 	controller.GetFeedbackCategoryById(w, r)
+	// // Delete Feedback Category
+	// case method == "DELETE" && path == "/feedback-category/delete":
+	// 	controller.DeleteDataFeedbackCategory(w, r)
+
 	// PEMESANAN
 	// Insert Pemesanan
 	case method == "POST" && path == "/insert/pemesanan":
