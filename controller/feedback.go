@@ -7,8 +7,8 @@ import (
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 )
 
 // Insert Feedback
@@ -57,9 +57,9 @@ func GetAllFeedback(respw http.ResponseWriter, req *http.Request) {
 	for _, feedback := range data {
 
 		feedbacks = append(feedbacks, map[string]interface{}{
-			"category":     model.FeedbackCategory{Category: feedback.Category.Category},
+			"category": model.FeedbackCategory{Category: feedback.Category.Category},
 			"comments": feedback.Comments,
-			"image":  feedback.Image,
+			"image":    feedback.Image,
 		})
 	}
 
@@ -69,5 +69,48 @@ func GetAllFeedback(respw http.ResponseWriter, req *http.Request) {
 		"data":    feedbacks,
 	}
 
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+// Get Feedback By Id
+func GetFeedbackById(respw http.ResponseWriter, req *http.Request) {
+	feedbackID := req.URL.Query().Get("id")
+	if feedbackID == "" {
+		var respn model.Response
+		respn.Status = "Error: ID feedback tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(feedbackID)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: ID Feedback tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	filter := bson.M{"_id": objectID}
+	dataFeedback, err := atdb.GetOneDoc[model.Feedback](config.Mongoconn, "feedback", filter)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Feedback tidak ditemukan"
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	data := model.Feedback{
+		ID: dataFeedback.ID,
+		// Category:    dataPortofolio.Category,
+		Category: model.FeedbackCategory{Category: dataFeedback.Category.Category},
+		Comments: dataFeedback.Comments,
+		Image:    dataFeedback.Image,
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Feedback ditemukan",
+		"data":    data,
+	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }

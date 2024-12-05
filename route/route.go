@@ -232,9 +232,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// All Feedback Category
 	case method == "GET" && path == "/feedback":
 		controller.GetAllFeedback(w, r)
-	// // Get Feedback Category By Id
-	// case method == "GET" && path == "/feedback-category/id":
-	// 	controller.GetFeedbackCategoryById(w, r)
+	// Get Feedback Category By Id
+	case method == "GET" && path == "/feedback/id":
+		controller.GetFeedbackById(w, r)
 	// // Delete Feedback Category
 	// case method == "DELETE" && path == "/feedback-category/delete":
 	// 	controller.DeleteDataFeedbackCategory(w, r)
