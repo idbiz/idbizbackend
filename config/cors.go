@@ -13,6 +13,7 @@ var Origins = []string{
 	"https://id.biz.id",
 	"http://127.0.0.1:5500"}
 
+
 // Fungsi untuk memeriksa apakah origin diizinkan
 func isAllowedOrigin(origin string) bool {
 	for _, o := range Origins {
@@ -43,6 +44,5 @@ func SetAccessControlHeaders(w http.ResponseWriter, r *http.Request) bool {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		return false
 	}
-
 	return false
 }
