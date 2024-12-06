@@ -103,7 +103,7 @@ func GetAllPortofolio(respw http.ResponseWriter, req *http.Request) {
 	for _, portofolio := range data {
 
 		portofolios = append(portofolios, map[string]interface{}{
-			"fullname":     model.DesignCategory{Category: portofolio.Category.Category},
+			"category":     model.DesignCategory{Category: portofolio.Category.Category},
 			"design_title": portofolio.DesignTitle,
 			"design_desc":  portofolio.DesignDesc,
 			"design_image": portofolio.DesignImage,
