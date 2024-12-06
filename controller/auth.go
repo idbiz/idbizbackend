@@ -704,7 +704,7 @@ func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 // fungsi get akun customer by id diambil dari token login
 func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
 	token := at.GetLoginFromHeader(r)
-	decryptedToken, err := watoken.Decode(config.PRIVATEKEY, token)
+	decryptedToken, err := watoken.Decode(config.PublicKeyWhatsAuth, token)
 	if err != nil {
 		response := model.Response{
 			Status:   "Error: Token tidak valid",
