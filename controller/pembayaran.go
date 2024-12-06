@@ -9,12 +9,13 @@ import (
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 // Insert Pembayaran
 func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 
-	OrderDescription := req.FormValue("order_description")
+	// OrderDescription := req.FormValue("order_description")
 	CardFullname := req.FormValue("card_fullname")
 	CardNumber := req.FormValue("card_number")
 	CardExpiration := req.FormValue("card_expiration")
@@ -22,7 +23,8 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 	Price := req.FormValue("price")
 
 	PembayaranInput := model.Pembayaran{
-		OrderDescription: model.Pemesanan{OrderDescription: OrderDescription},
+		// OrderDescription: model.Pembayaran{OrderDescription:},
+		// OrderDescription: OrderDescription,
 		CardFullname:     CardFullname,
 		CardNumber:       CardNumber,
 		CardExpiration:   CardExpiration,
@@ -77,7 +79,7 @@ func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
 
 	data := model.Pembayaran{
 		ID:               dataPembayaran.ID,
-		OrderDescription: dataPembayaran.OrderDescription,
+		// OrderDescription: dataPembayaran.OrderDescription,
 		CardFullname:     dataPembayaran.CardFullname,
 		CardNumber:       dataPembayaran.CardNumber,
 		CardExpiration:   dataPembayaran.CardExpiration,
@@ -108,7 +110,7 @@ func GetAllPembayaran(respw http.ResponseWriter, req *http.Request) {
 	for _, pembayaran := range data {
 
 		pembayarans = append(pembayarans, map[string]interface{}{
-			"order_description": model.Pemesanan{OrderDescription: pembayaran.OrderDescription.OrderDescription},
+			// "order_description": model.Pemesanan{OrderDescription: pembayaran.OrderDescription.OrderDescription},
 			"card_fullname":     pembayaran.CardFullname,
 			"card_number":       pembayaran.CardNumber,
 			"card_expiration":   pembayaran.CardExpiration,
