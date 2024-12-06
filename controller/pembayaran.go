@@ -24,7 +24,6 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Ambil data dari form
-	DesignSelected := req.FormValue("design_selected")
 	OrderDescription := req.FormValue("order_description")
 	CardFullname := req.FormValue("card_fullname")
 	CardNumber := req.FormValue("card_number")
@@ -33,7 +32,7 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 	Price := req.FormValue("price")
 
 	// Validasi data input
-	if DesignSelected == "" || OrderDescription == "" || CardFullname == "" || CardNumber == "" || CardExpiration == "" || CVV == "" || Price == "" {
+	if OrderDescription == "" || CardFullname == "" || CardNumber == "" || CardExpiration == "" || CVV == "" || Price == "" {
 		var respn model.Response
 		respn.Status = "Error: Semua field wajib diisi"
 		at.WriteJSON(respw, http.StatusBadRequest, respn)
@@ -42,7 +41,6 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 
 	// Buat objek untuk disimpan
 	PembayaranInput := model.Pembayaran{
-		// DesignSelected:   DesignSelected,
 		OrderDescription: OrderDescription,
 		CardFullname:     CardFullname,
 		CardNumber:       CardNumber,
