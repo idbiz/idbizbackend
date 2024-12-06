@@ -9,21 +9,11 @@ import (
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 )
 
+// Insert Pembayaran
 func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
-	// Parse form data
-	err := req.ParseForm()
-	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: Gagal memproses form data"
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusBadRequest, respn)
-		return
-	}
 
-	// Ambil data dari form
 	OrderDescription := req.FormValue("order_description")
 	CardFullname := req.FormValue("card_fullname")
 	CardNumber := req.FormValue("card_number")
@@ -31,17 +21,8 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 	CVV := req.FormValue("cvv")
 	Price := req.FormValue("price")
 
-	// Validasi data input
-	if OrderDescription == "" || CardFullname == "" || CardNumber == "" || CardExpiration == "" || CVV == "" || Price == "" {
-		var respn model.Response
-		respn.Status = "Error: Semua field wajib diisi"
-		at.WriteJSON(respw, http.StatusBadRequest, respn)
-		return
-	}
-
-	// Buat objek untuk disimpan
 	PembayaranInput := model.Pembayaran{
-		OrderDescription: OrderDescription,
+		OrderDescription: model.Pemesanan{OrderDescription: OrderDescription},
 		CardFullname:     CardFullname,
 		CardNumber:       CardNumber,
 		CardExpiration:   CardExpiration,
@@ -49,32 +30,30 @@ func InsertPembayaran(respw http.ResponseWriter, req *http.Request) {
 		Price:            Price,
 	}
 
-	// Masukkan ke database
 	dataPembayaran, err := atdb.InsertOneDoc(config.Mongoconn, "pembayaran", PembayaranInput)
 	if err != nil {
 		var respn model.Response
 		respn.Status = "Gagal Insert Database"
 		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		at.WriteJSON(respw, http.StatusNotModified, respn)
 		return
 	}
 
-	// Respons sukses
 	response := map[string]interface{}{
+		"message": "Transaksi pembayaran berhasil dibuat",
 		"status":  "success",
-		"message": "Transaksi pembayaran berhasil",
 		"data":    dataPembayaran,
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-// Get Pemesanan By Id
+// Get Pembayaran By Id
 func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
 	pembayaranID := req.URL.Query().Get("id")
 	if pembayaranID == "" {
 		var respn model.Response
-		respn.Status = "Error: ID transaksi tidak ditemukan"
+		respn.Status = "Error: ID transaksi pembayaran tidak ditemukan"
 		at.WriteJSON(respw, http.StatusBadRequest, respn)
 		return
 	}
@@ -82,7 +61,7 @@ func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
 	objectID, err := primitive.ObjectIDFromHex(pembayaranID)
 	if err != nil {
 		var respn model.Response
-		respn.Status = "Error: ID transaksi tidak valid"
+		respn.Status = "Error: ID transaksi pembayaran tidak valid"
 		at.WriteJSON(respw, http.StatusBadRequest, respn)
 		return
 	}
@@ -98,7 +77,6 @@ func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
 
 	data := model.Pembayaran{
 		ID:               dataPembayaran.ID,
-		// DesignSelected:   dataPembayaran.DesignSelected,
 		OrderDescription: dataPembayaran.OrderDescription,
 		CardFullname:     dataPembayaran.CardFullname,
 		CardNumber:       dataPembayaran.CardNumber,
@@ -109,8 +87,41 @@ func GetPembayaranById(respw http.ResponseWriter, req *http.Request) {
 
 	response := map[string]interface{}{
 		"status":  "success",
-		"message": "Transaksi ditemukan",
+		"message": "Transaksi pembayaran ditemukan",
 		"data":    data,
 	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+// Get All Pembayaran
+func GetAllPembayaran(respw http.ResponseWriter, req *http.Request) {
+	data, err := atdb.GetAllDoc[[]model.Pembayaran](config.Mongoconn, "pembayaran", primitive.M{})
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Data transaksi pembayaran tidak ditemukan"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusNotFound, respn)
+		return
+	}
+
+	var pembayarans []map[string]interface{}
+	for _, pembayaran := range data {
+
+		pembayarans = append(pembayarans, map[string]interface{}{
+			"order_description": model.Pemesanan{OrderDescription: pembayaran.OrderDescription.OrderDescription},
+			"card_fullname":     pembayaran.CardFullname,
+			"card_number":       pembayaran.CardNumber,
+			"card_expiration":   pembayaran.CardExpiration,
+			"cvv":               pembayaran.CVV,
+			"price":             pembayaran.Price,
+		})
+	}
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Data transaksi pembayaran berhasil diambil",
+		"data":    pembayarans,
+	}
+
 	at.WriteJSON(respw, http.StatusOK, response)
 }

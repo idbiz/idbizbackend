@@ -254,9 +254,12 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Insert Pembayaran
 	case method == "POST" && path == "/insert/pembayaran":
 		controller.InsertPembayaran(w, r)
-	// Get transaksi pembayaran by id
+	// Get Transaksi Pembayaran By Id
 	case method == "GET" && path == "/pembayaran/id":
 		controller.GetPembayaranById(w, r)
+	// All Transaksi Pembayaran
+	case method == "GET" && path == "/pembayaran":
+		controller.GetAllPembayaran(w, r)
 
 	//PORTFOLIO
 	// Insert Portfolio
