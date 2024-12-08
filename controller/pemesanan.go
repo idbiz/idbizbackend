@@ -1,11 +1,15 @@
 package controller
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+	"github.com/gocroot/helper/ghupload"
 
 	// "github.com/gocroot/helper/watoken"
 	// "github.com/gocroot/helper/ghupload"
@@ -15,21 +19,69 @@ import (
 )
 
 func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
+	file, header, err := req.FormFile("upload_references")
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gambar tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+	defer file.Close()
+	fileContent, err := io.ReadAll(file)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal membaca file"
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+	hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
+	GitHubAccessToken := config.GHAccessToken
+	GitHubAuthorName := "GhaidaFasya"
+	GitHubAuthorEmail := "ghaidafasya5@gmail.com"
+	githubOrg := "idbiz-img"
+	githubRepo := "img"
+	pathFile := "pemesanan/" + hashedFileName
+	replace := true
+	content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal mengupload gambar ke GitHub"
+		respn.Response = err.Error()
+		fmt.Println(err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+	upload_references := *content.Content.HTMLURL
 
 	Fullname := req.FormValue("fullname")
 	Email := req.FormValue("email")
 	PhoneNumber := req.FormValue("phone_number")
-	Category := req.FormValue("category")
+	Category := req.FormValue("category_id")
 	OrderDescription := req.FormValue("order_description")
-	UploadReferences := req.FormValue("upload_references")
+
+	objectCategoryID, err := primitive.ObjectIDFromHex(Category)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Kategori ID tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+	categoryDoc, err := atdb.GetOneDoc[model.DesignCategory](config.Mongoconn, "design-category", primitive.M{"_id": objectCategoryID})
+	if err != nil || categoryDoc.ID == primitive.NilObjectID {
+		var respn model.Response
+		respn.Status = "Error: Kategori tidak ditemukan"
+		respn.Response = "ID yang dicari: " + Category
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
 
 	PemesananInput := model.Pemesanan{
 		Fullname:         Fullname,
 		Email:            Email,
 		PhoneNumber:      PhoneNumber,
-		Category:         model.DesignCategory{Category: Category},
+		Category:         categoryDoc,
 		OrderDescription: OrderDescription,
-		UploadReferences: UploadReferences,
+		UploadReferences: upload_references,
 	}
 
 	dataPemesanan, err := atdb.InsertOneDoc(config.Mongoconn, "pemesanan", PemesananInput)
