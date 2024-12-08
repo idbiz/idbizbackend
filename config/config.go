@@ -33,4 +33,4 @@ func SetEnv() {
 }
 
 // var GHAccessToken string = os.Getenv("GH_ACCESS_TOKEN")
-var GHAccessToken string = "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"
+var GHAccessToken string = "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"
