@@ -1,11 +1,15 @@
 package controller
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+	"github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,18 +17,73 @@ import (
 
 // Insert Portfolio
 func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
+	file, header, err := req.FormFile("upload_references")
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gambar tidak ditemukan"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+	defer file.Close()
 
-	Category := req.FormValue("category")
+	fileContent, err := io.ReadAll(file)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal membaca file"
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+
+	hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
+	GitHubAccessToken := config.GHAccessToken
+	GitHubAuthorName := "GhaidaFasya"
+	GitHubAuthorEmail := "ghaidafasya5@gmail.com"
+	githubOrg := "idbiz-img"
+	githubRepo := "img"
+	pathFile := "pemesanan/" + hashedFileName
+	replace := true
+
+	content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal mengupload gambar ke GitHub"
+		respn.Response = err.Error()
+		fmt.Println(err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		return
+	}
+
+	upload_references := *content.Content.HTMLURL
+
+	Category := req.FormValue("category_id")
 	DesignTitle := req.FormValue("design_title")
 	DesignDesc := req.FormValue("design_desc")
-	DesignImage := req.FormValue("design_image")
+
+	objectCategoryID, err := primitive.ObjectIDFromHex(Category)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Kategori ID tidak valid"
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
+
+	categoryDoc, err := atdb.GetOneDoc[model.DesignCategory](config.Mongoconn, "design-category", primitive.M{"_id": objectCategoryID})
+	if err != nil || categoryDoc.ID == primitive.NilObjectID {
+		var respn model.Response
+		respn.Status = "Error: Kategori tidak ditemukan"
+		respn.Response = "ID yang dicari: " + Category
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
 
 	PortofolioInput := model.Portofolio{
-		Category:    model.DesignCategory{Category: Category},
+		Category:    categoryDoc,
 		DesignTitle: DesignTitle,
 		DesignDesc:  DesignDesc,
-		DesignImage: DesignImage,
+		DesignImage: upload_references,
 	}
+
+	fmt.Println(PortofolioInput)
 
 	dataPortofolio, err := atdb.InsertOneDoc(config.Mongoconn, "portofolio", PortofolioInput)
 	if err != nil {
