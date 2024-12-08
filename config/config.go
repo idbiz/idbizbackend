@@ -32,4 +32,5 @@ func SetEnv() {
 	WAAPIToken = Profile.Token
 }
 
-var GHAccessToken string = os.Getenv("GH_ACCESS_TOKEN")
+// var GHAccessToken string = os.Getenv("GH_ACCESS_TOKEN")
+var GHAccessToken string = "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"
