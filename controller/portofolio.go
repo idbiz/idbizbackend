@@ -17,7 +17,21 @@ import (
 
 // Insert Portfolio
 func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
-	file, header, err := req.FormFile("upload_references")
+	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	// if err != nil {
+	// 	payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+	// 	if err != nil {
+	// 		var respn model.Response
+	// 		respn.Status = "Error: Token Tidak Valid"
+	// 		respn.Info = at.GetSecretFromHeader(req)
+	// 		respn.Location = "Decode Token Error"
+	// 		respn.Response = err.Error()
+	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
+	// 		return
+	// 	}
+	// }
+
+	file, header, err := req.FormFile("design_image")
 	if err != nil {
 		var respn model.Response
 		respn.Status = "Error: Gambar tidak ditemukan"
@@ -38,7 +52,7 @@ func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
 	GitHubAuthorEmail := "ghaidafasya5@gmail.com"
 	githubOrg := "idbiz-img"
 	githubRepo := "img"
-	pathFile := "pemesanan/" + hashedFileName
+	pathFile := "portofolio/" + hashedFileName
 	replace := true
 	content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
 	if err != nil {
@@ -49,7 +63,7 @@ func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
 		return
 	}
-	upload_references := *content.Content.HTMLURL
+	design_image := *content.Content.HTMLURL
 
 	Category := req.FormValue("category_id")
 	DesignTitle := req.FormValue("design_title")
@@ -74,7 +88,7 @@ func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
 		Category:    categoryDoc,
 		DesignTitle: DesignTitle,
 		DesignDesc:  DesignDesc,
-		DesignImage: upload_references,
+		DesignImage: design_image,
 	}
 
 	fmt.Println(PortofolioInput)
