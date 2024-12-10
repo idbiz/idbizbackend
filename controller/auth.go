@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -703,11 +704,10 @@ func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 
 // fungsi get akun customer by id diambil dari token login
 func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
-	token := at.GetLoginFromHeader(r)
-	decryptedToken, err := watoken.Decode(config.PublicKeyWhatsAuth, token)
+	decryptedToken, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
 	if err != nil {
 		response := model.Response{
-			Status:   "Error: Token tidak valid" + token,
+			Status:   fmt.Sprintf("Error: Token tidak valid || data token: %+v", decryptedToken),
 			Response: "Error: " + err.Error(),
 		}
 		at.WriteJSON(respw, http.StatusForbidden, response)
