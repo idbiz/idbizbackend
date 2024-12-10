@@ -707,7 +707,7 @@ func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
 	decryptedToken, err := watoken.Decode(config.PublicKeyWhatsAuth, token)
 	if err != nil {
 		response := model.Response{
-			Status:   "Error: Token tidak valid",
+			Status:   "Error: Token tidak valid" + token,
 			Response: "Error: " + err.Error(),
 		}
 		at.WriteJSON(respw, http.StatusForbidden, response)
