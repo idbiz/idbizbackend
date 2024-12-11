@@ -731,3 +731,29 @@ func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func GetAllAkun(respw http.ResponseWriter, r *http.Request) {
+	var users []model.Userdomyikado
+	cursor, err := config.Mongoconn.Collection("user").Find(context.Background(), bson.M{})
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Gagal mengambil data user",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var user model.Userdomyikado
+		cursor.Decode(&user)
+		users = append(users, user)
+	}
+
+	response := map[string]interface{}{
+		"message": "Data berhasil diambil",
+		"user":    users,
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
