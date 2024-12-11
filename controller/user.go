@@ -10,11 +10,6 @@ import (
 	"time"
 
 	"github.com/gocroot/config"
-	"github.com/gocroot/model"
-	"github.com/whatsauth/itmodel"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atapi"
 	"github.com/gocroot/helper/atdb"
@@ -23,6 +18,10 @@ import (
 	"github.com/gocroot/helper/report"
 	"github.com/gocroot/helper/watoken"
 	"github.com/gocroot/helper/whatsauth"
+	"github.com/gocroot/model"
+	"github.com/whatsauth/itmodel"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func GetDataUserFromApi(respw http.ResponseWriter, req *http.Request) {
@@ -49,7 +48,7 @@ func GetDataUser(respw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		var respn model.Response
 		respn.Status = "Error : Token Tidak Valid "
-		respn.Info = at.GetSecretFromHeader(req)
+		respn.Info = config.PublicKeyWhatsAuth
 		respn.Location = "Decode Token Error: " + at.GetLoginFromHeader(req)
 		respn.Response = err.Error()
 		at.WriteJSON(respw, http.StatusForbidden, respn)
