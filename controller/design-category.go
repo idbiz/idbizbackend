@@ -94,10 +94,11 @@ func GetAllDesignCategory(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var categorys []map[string]interface{}
+	var categories []map[string]interface{}
 	for _, category := range data {
 
-		categorys = append(categorys, map[string]interface{}{
+		categories = append(categories, map[string]interface{}{
+			"id": 	 category.ID,
 			"category": category.Category,
 		})
 	}
@@ -105,7 +106,7 @@ func GetAllDesignCategory(respw http.ResponseWriter, req *http.Request) {
 	response := map[string]interface{}{
 		"status":  "success",
 		"message": "Data design category berhasil diambil",
-		"data":    categorys,
+		"data":    categories,
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)
