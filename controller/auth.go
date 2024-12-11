@@ -596,7 +596,7 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		Role:          role,
 	}
 
-	_, err = atdb.InsertOneDoc(config.Mongoconn, "users", newUser)
+	_, err = atdb.InsertOneDoc(config.Mongoconn, "user", newUser)
 	if err != nil {
 		respn := model.Response{
 			Status:   "Failed to insert new user",
@@ -633,7 +633,7 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 	}
 
 	var storedUser model.Userdomyikado
-	err := config.Mongoconn.Collection("users").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
+	err := config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
 	if err != nil {
 		response := model.Response{
 			Status:   "Error: Toko tidak ditemukan",
@@ -678,7 +678,7 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 
 func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 	var users []model.Userdomyikado
-	cursor, err := config.Mongoconn.Collection("users").Find(context.Background(), bson.M{})
+	cursor, err := config.Mongoconn.Collection("user").Find(context.Background(), bson.M{})
 	if err != nil {
 		response := model.Response{
 			Status:   "Error: Gagal mengambil data user",
@@ -697,7 +697,7 @@ func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"message": "Data berhasil diambil",
-		"users":   users,
+		"user":    users,
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
@@ -715,7 +715,7 @@ func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
 	}
 
 	var user model.Userdomyikado
-	err = config.Mongoconn.Collection("users").FindOne(context.Background(), bson.M{"phonenumber": decryptedToken.Id}).Decode(&user)
+	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phonenumber": decryptedToken.Id}).Decode(&user)
 	if err != nil {
 		response := model.Response{
 			Status:   "Error: User tidak ditemukan",
