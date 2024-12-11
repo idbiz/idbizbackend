@@ -10,6 +10,7 @@ import (
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/helper/ghupload"
+	"github.com/gocroot/helper/watoken"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,19 +18,27 @@ import (
 
 // Insert Portfolio
 func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
-	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	// if err != nil {
-	// 	payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Token Tidak Valid"
-	// 		respn.Info = at.GetSecretFromHeader(req)
-	// 		respn.Location = "Decode Token Error"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 		return
-	// 	}
-	// }
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Token Tidak Valid"
+		respn.Info = config.PublicKeyWhatsAuth
+		respn.Location = "Decode Token Error"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusForbidden, respn)
+		return
+
+	}
+
+	err = req.ParseMultipartForm(10 << 20)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error: Gagal memproses form data"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
 
 	file, header, err := req.FormFile("design_image")
 	if err != nil {
@@ -39,6 +48,7 @@ func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer file.Close()
+
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
 		var respn model.Response
@@ -46,23 +56,25 @@ func InsertPortofolio(respw http.ResponseWriter, req *http.Request) {
 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
 		return
 	}
+
 	hashedFileName := ghupload.CalculateHash(fileContent) + header.Filename[strings.LastIndex(header.Filename, "."):]
 	GitHubAccessToken := config.GHAccessToken
-	GitHubAuthorName := "GhaidaFasya"
-	GitHubAuthorEmail := "ghaidafasya5@gmail.com"
-	githubOrg := "idbiz-img"
+	GitHubAuthorName := "Rolly Maulana Awangga"
+	GitHubAuthorEmail := "awangga@gmail.com"
+	githubOrg := "idbiz"
 	githubRepo := "img"
 	pathFile := "portofolio/" + hashedFileName
 	replace := true
+
 	content, _, err := ghupload.GithubUpload(GitHubAccessToken, GitHubAuthorName, GitHubAuthorEmail, fileContent, githubOrg, githubRepo, pathFile, replace)
 	if err != nil {
 		var respn model.Response
 		respn.Status = "Error: Gagal mengupload gambar ke GitHub"
 		respn.Response = err.Error()
-		fmt.Println(err.Error())
 		at.WriteJSON(respw, http.StatusInternalServerError, respn)
 		return
 	}
+
 	design_image := *content.Content.HTMLURL
 
 	Category := req.FormValue("category_id")
