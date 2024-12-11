@@ -13,6 +13,7 @@ import (
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 func InsertPemesanan(respw http.ResponseWriter, req *http.Request) {
@@ -188,7 +189,7 @@ func GetAllPemesanan(respw http.ResponseWriter, req *http.Request) {
 			"fullname":          pemesanan.Fullname,
 			"email":             pemesanan.Email,
 			"phone_number":      pemesanan.PhoneNumber,
-			"category":          model.DesignCategory{Category: pemesanan.Category.Category},
+			"category":          pemesanan.Category,
 			"order_description": pemesanan.OrderDescription,
 			"upload_references": pemesanan.UploadReferences,
 		})

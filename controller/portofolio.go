@@ -14,6 +14,7 @@ import (
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 // Insert Portfolio
@@ -181,7 +182,7 @@ func GetAllPortofolio(respw http.ResponseWriter, req *http.Request) {
 	for _, portofolio := range data {
 
 		portofolios = append(portofolios, map[string]interface{}{
-			"category":     model.DesignCategory{Category: portofolio.Category.Category},
+			"category":     portofolio.Category,
 			"design_title": portofolio.DesignTitle,
 			"design_desc":  portofolio.DesignDesc,
 			"design_image": portofolio.DesignImage,
