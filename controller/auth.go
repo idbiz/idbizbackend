@@ -658,9 +658,19 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		var respn model.Response
 		respn.Status = "Error: token gagal generate"
 		respn.Response = ", Error: " + err.Error()
-		at.WriteJSON(respw, http.StatusNotFound, respn)
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
 		return
 	}
+
+	// Set token in cookie
+	http.SetCookie(respw, &http.Cookie{
+		Name:     "login",
+		Value:    encryptedToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true, // Set to true in production with HTTPS
+		Expires:  time.Now().Add(18 * time.Hour),
+	})
 
 	response := map[string]interface{}{
 		"message": "Login successful",
@@ -669,12 +679,12 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		"phone":   storedUser.PhoneNumber,
 		"team":    storedUser.Team,
 		"scope":   storedUser.Scope,
-		"token":   encryptedToken,
 		"antrian": storedUser.JumlahAntrian,
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
 
 func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 	var users []model.Userdomyikado
