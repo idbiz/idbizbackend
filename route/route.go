@@ -291,5 +291,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Google Auth
 	default:
 		controller.NotFound(w, r)
+
+	// login admin
+	case method == "POST" && path == "/auth/login/admin":
+		controller.LoginAkunAdmin(w, r)
 	}
 }
