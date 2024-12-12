@@ -7,12 +7,10 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
-	"github.com/gocroot/helper/watoken"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	// "github.com/gocroot/helper/watoken"
-	// "github.com/gocroot/helper/ghupload"
 	"github.com/gocroot/model"
 	// "go.mongodb.org/mongo-driver/bson"
 	// "go.mongodb.org/mongo-driver/bson/primitive"
@@ -116,21 +114,21 @@ func GetAllDesignCategory(respw http.ResponseWriter, req *http.Request) {
 
 // Update Design Category
 func UpdateDesignCategory(respw http.ResponseWriter, req *http.Request) {
-	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	// payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 
-	if err != nil {
-		payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+	// if err != nil {
+	// 	payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
 
-		if err != nil {
-			var respn model.Response
-			respn.Status = "Error: Token Tidak Valid"
-			respn.Info = at.GetSecretFromHeader(req)
-			respn.Location = "Decode Token Error"
-			respn.Response = err.Error()
-			at.WriteJSON(respw, http.StatusForbidden, respn)
-			return
-		}
-	}
+	// 	if err != nil {
+	// 		var respn model.Response
+	// 		respn.Status = "Error: Token Tidak Valid"
+	// 		respn.Info = at.GetSecretFromHeader(req)
+	// 		respn.Location = "Decode Token Error"
+	// 		respn.Response = err.Error()
+	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
+	// 		return
+	// 	}
+	// }
 
 	categoryID := req.URL.Query().Get("id")
 	if categoryID == "" {
@@ -191,7 +189,7 @@ func UpdateDesignCategory(respw http.ResponseWriter, req *http.Request) {
 		"status":  "success",
 		"message": "category berhasil diupdate",
 		"data":    updateData,
-		"name":    payload.Alias,
+		// "name":    payload.Alias,
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
