@@ -757,3 +757,62 @@ func GetAllAkun(respw http.ResponseWriter, r *http.Request) {
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func LoginAkunAdmin(respw http.ResponseWriter, r *http.Request) {
+	var adminRequest model.AdminRequest
+
+	// Decode incoming JSON request into adminRequest struct
+	if err := json.NewDecoder(r.Body).Decode(&adminRequest); err != nil {
+		response := model.Response{
+			Status:   "Invalid Request",
+			Response: err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusBadRequest, response)
+		return
+	}
+
+	// Find the admin in the database using the provided Username
+	var storedAdmin model.Admin
+	err := config.Mongoconn.Collection("admin").FindOne(context.Background(), bson.M{"username": adminRequest.Username}).Decode(&storedAdmin)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Admin not found",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+
+	// Compare the provided password with the stored hash
+	err = bcrypt.CompareHashAndPassword([]byte(storedAdmin.Password), []byte(adminRequest.Password))
+	if err != nil {
+		response := model.Response{
+			Status:   "Failed to verify password",
+			Response: "Invalid password",
+		}
+		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		return
+	}
+
+	// Generate a token for the admin to access the dashboard
+	encryptedToken, err := watoken.EncodeforHours(storedAdmin.Username, "Admin", config.PRIVATEKEY, 18)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Token generation failed",
+			Response: ", Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+
+	// Response with the login success and token for the admin
+	response := map[string]interface{}{
+		"message":       "Login successful",
+		"username":      storedAdmin.Username,
+		"role":          storedAdmin.Role,
+		"token":         encryptedToken,
+		"dashboardLink": "/admin/dashboard", // Example link to dashboard
+	}
+
+	at.WriteJSON(respw, http.StatusOK, response)
+}

@@ -92,8 +92,8 @@ type Userdomyikado struct {
 	Name                 string             `bson:"name,omitempty" json:"name,omitempty"`
 	PhoneNumber          string             `bson:"phonenumber,omitempty" json:"phonenumber,omitempty"`
 	Email                string             `bson:"email,omitempty" json:"email,omitempty"`
-	Role				 string				`bson:"role,omitempty" json:"role,omitempty"`
-	Password			 string				`bson:"password,omitempty" json:"password,omitempty"`
+	Role                 string             `bson:"role,omitempty" json:"role,omitempty"`
+	Password             string             `bson:"password,omitempty" json:"password,omitempty"`
 	NIK                  string             `bson:"nik,omitempty" json:"nik,omitempty"`
 	Pekerjaan            string             `bson:"pekerjaan,omitempty" json:"pekerjaan,omitempty"`
 	AlamatRumah          string             `bson:"alamatrumah,omitempty" json:"alamatrumah,omitempty"`
@@ -139,4 +139,16 @@ type Stp struct {
 type VerifyRequest struct {
 	PhoneNumber string `json:"phonenumber"`
 	Password    string `json:"password"`
+}
+
+type AdminRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// Admin represents the admin data stored in the database.
+type Admin struct {
+	Username string `bson:"username"`
+	Password string `bson:"password"`
+	Role     string `bson:"role"` // You can customize this based on your needs, e.g., "admin", "superadmin"
 }
