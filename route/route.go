@@ -209,6 +209,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Get Design Category By Id
 	case method == "GET" && path == "/design-category/id":
 		controller.GetDesignCategoryById(w, r)
+	// Update Design Category
+	case method == "PUT" && path == "/update/design-category":
+		controller.UpdateDesignCategory(w, r)
 	// Delete Design Category
 	case method == "DELETE" && path == "/design-category/delete":
 		controller.DeleteDataDesignCategory(w, r)
