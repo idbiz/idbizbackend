@@ -7,39 +7,32 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
-	// "github.com/gocroot/helper/watoken"
+	"github.com/gocroot/helper/watoken"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
-
 )
 
 func GetRoads(respw http.ResponseWriter, req *http.Request) {
-	// _, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-
-	// if err != nil {
-	// 	_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-
-	// 	if err != nil {
-	// 		var respn model.Response
-	// 		respn.Status = "Error: Token Tidak Valid"
-	// 		respn.Info = at.GetSecretFromHeader(req)
-	// 		respn.Location = "Decode Token Error"
-	// 		respn.Response = err.Error()
-	// 		at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 		return
-	// 	}
-	// }
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error : Token Tidak Valid "
+		respn.Info = config.PublicKeyWhatsAuth
+		respn.Location = "Decode Token Error: " + at.GetLoginFromHeader(req)
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusForbidden, respn)
+		return
+	}
 
 	var longlat model.LongLat
-	json.NewDecoder(req.Body).Decode(&longlat)
-	// err = json.NewDecoder(req.Body).Decode(&longlat)
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error : Body tidak valid"
-	// 	respn.Response = err.Error()
-	// 	at.WriteJSON(respw, http.StatusBadRequest, respn)
-	// 	return
-	// }
+	err = json.NewDecoder(req.Body).Decode(&longlat)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error : Body tidak valid"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
 
 	filter := bson.M{
 		"geometry": bson.M{
@@ -62,28 +55,26 @@ func GetRoads(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetRegion(respw http.ResponseWriter, req *http.Request) {
-	// Dekode token untuk autentikasi
-	// _, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error : Token Tidak Valid"
-	// 	respn.Location = "Decode Token Error: " + at.GetLoginFromHeader(req)
-	// 	respn.Response = err.Error()
-	// 	at.WriteJSON(respw, http.StatusForbidden, respn)
-	// 	return
-	// }
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error : Token Tidak Valid "
+		respn.Info = config.PublicKeyWhatsAuth
+		respn.Location = "Decode Token Error: " + at.GetLoginFromHeader(req)
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusForbidden, respn)
+		return
+	}
 
-	// Parse koordinat dari body request
 	var longlat model.LongLat
-	json.NewDecoder(req.Body).Decode(&longlat)
-	// err = json.NewDecoder(req.Body).Decode(&longlat)
-	// if err != nil {
-	// 	var respn model.Response
-	// 	respn.Status = "Error : Body tidak valid"
-	// 	respn.Response = err.Error()
-	// 	at.WriteJSON(respw, http.StatusBadRequest, respn)
-	// 	return
-	// }
+	err = json.NewDecoder(req.Body).Decode(&longlat)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error : Body tidak valid"
+		respn.Response = err.Error()
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
+		return
+	}
 
 	// Filter query geospasial
 	filter := bson.M{
