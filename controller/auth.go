@@ -685,7 +685,6 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-
 func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 	var users []model.Userdomyikado
 	cursor, err := config.Mongoconn.Collection("user").Find(context.Background(), bson.M{})
@@ -824,5 +823,67 @@ func LoginAkunAdmin(respw http.ResponseWriter, r *http.Request) {
 		"dashboardLink": "/admin/dashboard", // Example link to dashboard
 	}
 
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
+func RegisterAkunAdmin(respw http.ResponseWriter, r *http.Request) {
+	var adminRequest model.AdminRequest
+
+	// Decode incoming JSON request into adminRequest struct
+	if err := json.NewDecoder(r.Body).Decode(&adminRequest); err != nil {
+		response := model.Response{
+			Status:   "Invalid Request",
+			Response: err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusBadRequest, response)
+		return
+	}
+
+	// Check if username already exists
+	var existingAdmin model.Admin
+	err := config.Mongoconn.Collection("admin").FindOne(context.Background(), bson.M{"username": adminRequest.Username}).Decode(&existingAdmin)
+	if err == nil {
+		response := model.Response{
+			Status:   "Error: Username already exists",
+			Response: "The provided username is already in use.",
+		}
+		at.WriteJSON(respw, http.StatusConflict, response)
+		return
+	}
+
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminRequest.Password), bcrypt.DefaultCost)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Failed to hash password",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Create a new admin model
+	newAdmin := model.Admin{
+		Username: adminRequest.Username,
+		Password: string(hashedPassword),
+		Role:     "Admin", // Default role for admin
+	}
+
+	// Insert the new admin into the database
+	_, err = config.Mongoconn.Collection("admin").InsertOne(context.Background(), newAdmin)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Failed to register admin",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Respond with success message
+	response := model.Response{
+		Status:   "Success",
+		Response: "Admin registered successfully",
+	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }

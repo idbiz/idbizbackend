@@ -296,4 +296,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/login/admin":
 		controller.LoginAkunAdmin(w, r)
 	}
+
+	// register admin
+	if method == "POST" && path == "/auth/register/admin" {
+		controller.RegisterAkunAdmin(w, r)
+	}
 }
