@@ -263,6 +263,26 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/pesanan/id":
 		controller.GetPesananByID(w, r)
 
+	// PEMBAYARAN
+	// Insert Pembayaran
+	case method == "POST" && path == "/insert/pembayaran":
+		controller.CreatePembayaran(w, r)
+	// Get All Pembayaran
+	case method == "GET" && path == "/pembayaran":
+		controller.GetAllPembayaran(w, r)
+	
+	// ITEM PESANAN
+	// Insert Item Pesanan
+	case method == "POST" && path == "/insert/itempesanan":
+		controller.CreateItemPesanan(w, r)
+	// Get All Item Pesanan
+	case method == "GET" && path == "/itempesanan":
+		controller.GetAllItemPesanan(w, r)
+	// Update Pesan Status
+	case method == "PUT" && path == "/update/itempesanan":
+		controller.UpdatePesanStatus(w, r)
+	
+
 	//GEO
 	// Roads
 	case method == "POST" && path == "/geo/roads":
@@ -283,3 +303,4 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.NotFound(w, r)
 	}
 }
+
