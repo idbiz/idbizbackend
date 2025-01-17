@@ -6,15 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// type User struct {
-// 	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-// 	Username    string             `json:"username,omitempty" bson:"username,omitempty"`
-// 	Email       string             `json:"email,omitempty" bson:"email,omitempty"`
-// 	Password    string             `json:"password,omitempty" bson:"password,omitempty"`
-// 	PhoneNumber string             `json:"phone_number,omitempty" bson:"phone_number,omitempty"`
-// 	Role        string             `json:"role,omitempty" bson:"role,omitempty"`
-// }
-
 type Portofolio struct {
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	NamaDesain string             `json:"nama_desain,omitempty" bson:"nama_desain,omitempty"`
