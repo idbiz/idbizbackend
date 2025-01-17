@@ -548,7 +548,7 @@ func ResendPasswordHandler(respw http.ResponseWriter, r *http.Request) {
 	auth.SendWhatsAppPassword(respw, request.PhoneNumber, randomPassword)
 }
 
-func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
+func RegisterAkun(respw http.ResponseWriter, r *http.Request) {
 	var request model.Userdomyikado
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -620,9 +620,10 @@ func RegisterAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
+func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 	var userRequest model.Userdomyikado
 
+	// Decode the incoming request
 	if err := json.NewDecoder(r.Body).Decode(&userRequest); err != nil {
 		response := model.Response{
 			Status:   "Invalid Request",
@@ -632,17 +633,19 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch the user from the database using the provided email
 	var storedUser model.Userdomyikado
 	err := config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
 	if err != nil {
 		response := model.Response{
-			Status:   "Error: Toko tidak ditemukan",
+			Status:   "Error: User not found",
 			Response: "Error: " + err.Error(),
 		}
 		at.WriteJSON(respw, http.StatusNotFound, response)
 		return
 	}
 
+	// Compare the provided password with the stored hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(userRequest.Password))
 	if err != nil {
 		response := model.Response{
@@ -653,20 +656,28 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate token
+	// Generate an encrypted token
 	encryptedToken, err := watoken.EncodeforHours(storedUser.PhoneNumber, storedUser.Name, config.PRIVATEKEY, 18)
 	if err != nil {
-		var respn model.Response
-		respn.Status = "Error: token gagal generate"
-		respn.Response = ", Error: " + err.Error()
-		at.WriteJSON(respw, http.StatusInternalServerError, respn)
+		response := model.Response{
+			Status:   "Error: token generation failed",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusInternalServerError, response)
 		return
 	}
 
-	// Set token in header
-	respw.Header().Set("login", encryptedToken)
+	// Set the token in a secure, HTTP-only cookie
+	http.SetCookie(respw, &http.Cookie{
+		Name:     "login",
+		Value:    encryptedToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true, // Ensure this is set to true when using HTTPS in production
+		Expires:  time.Now().Add(18 * time.Hour),
+	})
 
-	// Send the response back with user data
+	// Prepare the success response with user data
 	response := map[string]interface{}{
 		"message": "Login successful",
 		"name":    storedUser.Name,
@@ -677,6 +688,7 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		"antrian": storedUser.JumlahAntrian,
 	}
 
+	// Send the success response
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 

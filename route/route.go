@@ -189,9 +189,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// AUTH
 	// Register
 	case method == "POST" && path == "/auth/register":
-		controller.RegisterAkunDesigner(w, r)
+		controller.RegisterAkun(w, r)
 	case method == "POST" && path == "/auth/login/form":
-		controller.LoginAkunDesigner(w, r)
+		controller.LoginAkun(w, r)
 	case method == "GET" && path == "/auth/users/cust":
 		controller.GetAkunCustomer(w, r)
 	case method == "GET" && path == "/auth/users/cust/id":
