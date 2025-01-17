@@ -623,7 +623,7 @@ func RegisterAkun(respw http.ResponseWriter, r *http.Request) {
 func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 	var userRequest model.Userdomyikado
 
-	// Decode the incoming request
+	// Decode the incoming request to extract user credentials
 	if err := json.NewDecoder(r.Body).Decode(&userRequest); err != nil {
 		response := model.Response{
 			Status:   "Invalid Request",
@@ -656,11 +656,11 @@ func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate an encrypted token
+	// Generate an encrypted token using the WA token package
 	encryptedToken, err := watoken.EncodeforHours(storedUser.PhoneNumber, storedUser.Name, config.PRIVATEKEY, 18)
 	if err != nil {
 		response := model.Response{
-			Status:   "Error: token generation failed",
+			Status:   "Error: Token generation failed",
 			Response: "Error: " + err.Error(),
 		}
 		at.WriteJSON(respw, http.StatusInternalServerError, response)
@@ -674,7 +674,7 @@ func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true, // Ensure this is set to true when using HTTPS in production
-		Expires:  time.Now().Add(18 * time.Hour),
+		Expires:  time.Now().Add(18 * time.Hour), // Set expiration to 18 hours
 	})
 
 	// Prepare the success response with user data
@@ -688,10 +688,9 @@ func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 		"antrian": storedUser.JumlahAntrian,
 	}
 
-	// Send the success response
+	// Send the success response with the user data
 	at.WriteJSON(respw, http.StatusOK, response)
 }
-
 
 func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 	var users []model.Userdomyikado
