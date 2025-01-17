@@ -245,11 +245,11 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	// PEMESANAN
 	// Insert Pemesanan
-	case method == "POST" && path == "/insert/pemesanan":
-		controller.InsertPemesanan(w, r)
+	case method == "POST" && path == "/insert/pesan":
+		controller.CreatePesanan(w, r)
 	// All Pemesanan
-	case method == "GET" && path == "/pemesanan":
-		controller.GetAllPemesanan(w, r)
+	case method == "GET" && path == "/all/pesanan":
+		controller.GetAllPesanan(w, r)
 	// Get Pemesanan By Id
 	case method == "GET" && path == "/pemesanan/id":
 		controller.GetPemesananById(w, r)
@@ -260,27 +260,27 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// PEMBAYARAN
 	// Insert Pembayaran
 	case method == "POST" && path == "/insert/pembayaran":
-		controller.InsertPembayaran(w, r)
-	// Get Transaksi Pembayaran By Id
-	case method == "GET" && path == "/pembayaran/id":
-		controller.GetPembayaranById(w, r)
-	// All Transaksi Pembayaran
-	case method == "GET" && path == "/pembayaran":
-		controller.GetAllPembayaran(w, r)
+		controller.CreatePembayaran(w, r)
+	// // Get Transaksi Pembayaran By Id
+	// case method == "GET" && path == "/pembayaran/id":
+	// 	controller.GetPembayaranById(w, r)
+	// // All Transaksi Pembayaran
+	// case method == "GET" && path == "/pembayaran":
+	// 	controller.GetAllPembayaran(w, r)
 
 	//PORTFOLIO
 	// Insert Portfolio
 	case method == "POST" && path == "/insert/portofolio":
-		controller.InsertPortofolio(w, r)
+		controller.CreatePortofolio(w, r)
 	// Get All Portfolio
 	case method == "GET" && path == "/portofolio":
 		controller.GetAllPortofolio(w, r)
-	// Get Portfolio By Id
-	case method == "GET" && path == "/portofolio/id":
-		controller.GetPortofolioById(w, r)
-	// Delete PortoFolio
-	case method == "DELETE" && path == "/portofolio/delete":
-		controller.DeleteDataPortofolio(w, r)
+	// // Get Portfolio By Id
+	// case method == "GET" && path == "/portofolio/id":
+	// 	controller.GetPortofolioById(w, r)
+	// // Delete PortoFolio
+	// case method == "DELETE" && path == "/portofolio/delete":
+	// 	controller.DeleteDataPortofolio(w, r)
 
 	//GEO
 	// Roads
