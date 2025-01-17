@@ -887,3 +887,53 @@ func RegisterAkunAdmin(respw http.ResponseWriter, r *http.Request) {
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func GetUser(respw http.ResponseWriter, r *http.Request) {
+	// Mendapatkan token dari cookie
+	tokenCookie, err := r.Cookie("login")
+	if err != nil {
+		response := model.Response{
+			Status:   "Error",
+			Response: "Token not found in cookie",
+		}
+		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		return
+	}
+
+	// Mendekode token untuk mendapatkan informasi user
+	decodedData, err := watoken.Decode(tokenCookie.Value, config.PRIVATEKEY)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error",
+			Response: "Failed to decode token",
+		}
+		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		return
+	}
+
+	// Mengambil data pengguna berdasarkan informasi yang ada pada token (misalnya: phoneNumber atau id)
+	var storedUser model.Userdomyikado
+	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phonenumber": decodedData.Id}).Decode(&storedUser)
+	if err != nil {
+		response := model.Response{
+			Status:   "Error",
+			Response: "User not found",
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+
+	// Mengembalikan data pengguna sebagai response
+	response := map[string]interface{}{
+		"message": "User data fetched successfully",
+		"name":    storedUser.Name,
+		"email":   storedUser.Email,
+		"phone":   storedUser.PhoneNumber,
+		"team":    storedUser.Team,
+		"scope":   storedUser.Scope,
+		"antrian": storedUser.JumlahAntrian,
+	}
+
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+

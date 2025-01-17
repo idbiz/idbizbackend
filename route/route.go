@@ -198,6 +198,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.GetAkunCustomerByID(w, r)
 	case method == "GET" && path == "/auth/users/all":
 		controller.GetAllAkun(w, r)
+	case method == "GET" && path == "/auth/users":
+		controller.GetUser(w, r)
 
 	// DESIGN CATEGORY
 	// Insert Design Category
@@ -287,18 +289,16 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Region
 	case method == "POST" && path == "/geo/region":
 		controller.GetRegion(w, r)
-
-	// Google Auth
-	default:
-		controller.NotFound(w, r)
-
+	
 	// login admin
 	case method == "POST" && path == "/auth/login/admin":
 		controller.LoginAkunAdmin(w, r)
-	}
-
 	// register admin
-	if method == "POST" && path == "/auth/register/admin" {
+	case method == "POST" && path == "/auth/register/admin":
 		controller.RegisterAkunAdmin(w, r)
+	
+	// Google Auth
+	default:
+		controller.NotFound(w, r)
 	}
 }
