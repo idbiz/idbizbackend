@@ -180,19 +180,20 @@ func GetAllPortofolio(respw http.ResponseWriter, req *http.Request) {
 
 	var portofolios []map[string]interface{}
 	for _, portofolio := range data {
-
 		portofolios = append(portofolios, map[string]interface{}{
-			"category":     portofolio.Category,
+			"category": map[string]interface{}{
+				"id":       portofolio.Category.ID,
+				"category": portofolio.Category.Category,
+			},
 			"design_title": portofolio.DesignTitle,
 			"design_desc":  portofolio.DesignDesc,
 			"design_image": portofolio.DesignImage,
 		})
 	}
 
+	// Only include the "data" key in the response
 	response := map[string]interface{}{
-		"status":  "success",
-		"message": "Data Portofolio berhasil diambil",
-		"data":    portofolios,
+		"data": portofolios,
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)
