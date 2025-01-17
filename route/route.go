@@ -246,6 +246,23 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/portofolio/kategori":
 		controller.GetPortofolioByKategori(w, r)
 
+	// PESANAN
+	// Insert Pesanan
+	case method == "POST" && path == "/insert/pesanan":
+		controller.CreatePesanan(w, r)
+	// Get All Pesanan
+	case method == "GET" && path == "/pesanan":
+		controller.GetAllPesanan(w, r)
+	// Update Pesanan
+	case method == "PUT" && path == "/update/pesanan":
+		controller.UpdatePesanan(w, r)
+	// Delete Pesanan
+	case method == "DELETE" && path == "/delete/pesanan":
+		controller.DeletePesanan(w, r)
+	// Get Pesanan By Id
+	case method == "GET" && path == "/pesanan/id":
+		controller.GetPesananByID(w, r)
+
 	//GEO
 	// Roads
 	case method == "POST" && path == "/geo/roads":
