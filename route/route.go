@@ -226,19 +226,25 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// case method == "GET" && path == "/pembayaran":
 	// 	controller.GetAllPembayaran(w, r)
 
-	//PORTFOLIO
+	// PORTFOLIO
 	// Insert Portfolio
 	case method == "POST" && path == "/insert/portofolio":
 		controller.CreatePortofolio(w, r)
 	// Get All Portfolio
 	case method == "GET" && path == "/portofolio":
 		controller.GetAllPortofolio(w, r)
-	// // Get Portfolio By Id
-	// case method == "GET" && path == "/portofolio/id":
-	// 	controller.GetPortofolioById(w, r)
-	// // Delete PortoFolio
-	// case method == "DELETE" && path == "/portofolio/delete":
-	// 	controller.DeleteDataPortofolio(w, r)
+	// Get Portfolio By Id
+	case method == "PUT" && path == "/update/portofolio":
+		controller.UpdatePortofolio(w, r)
+	// Delete PortoFolio
+	case method == "DELETE" && path == "/delete/portofolio":
+		controller.DeletePortofolio(w, r)
+	// Get Portfolio By Id
+	case method == "GET" && path == "/portofolio/id":
+		controller.GetPortofolioByID(w, r)
+	// Get Portfolio By Kategori
+	case method == "GET" && path == "/portofolio/kategori":
+		controller.GetPortofolioByKategori(w, r)
 
 	//GEO
 	// Roads
