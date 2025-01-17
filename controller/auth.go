@@ -897,49 +897,46 @@ func RegisterAkunAdmin(respw http.ResponseWriter, r *http.Request) {
 }
 
 func GetUser(respw http.ResponseWriter, r *http.Request) {
-	// Mendapatkan token dari cookie
-	tokenCookie, err := r.Cookie("login")
+	// Retrieve the WA token from the header (or cookies if it's stored there)
+	token := at.GetLoginFromHeader(r) // Assuming the token is in the header
+
+	// Decode the WA token (use the appropriate method based on your token type)
+	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, token)
 	if err != nil {
+		// If the token is invalid, return an error response
 		response := model.Response{
-			Status:   "Error",
-			Response: "Token not found in cookie",
+			Status:   "Unauthorized",
+			Response: "Invalid token: " + err.Error(),
+			Info:     config.PublicKeyWhatsAuth,
+			Location: "Decode Token Error: " + token,
 		}
-		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		at.WriteJSON(respw, http.StatusForbidden, response)
 		return
 	}
 
-	// Mendekode token untuk mendapatkan informasi user
-	decodedData, err := watoken.Decode(tokenCookie.Value, config.PRIVATEKEY)
+	// Use the phone number from the token payload (assuming it's in the "Id" field)
+	phoneNumber := payload.Id // Assuming the payload contains "Id" for phone number
+
+	// Fetch the user from the database using the phone number
+	var user model.Userdomyikado
+	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phoneNumber": phoneNumber}).Decode(&user)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error",
-			Response: "Failed to decode token",
-		}
-		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		// If the user is not found, return the payload data (e.g., alias and phone number)
+		user.PhoneNumber = payload.Id
+		user.Name = payload.Alias // Assuming "Alias" is the name in the payload
+		at.WriteJSON(respw, http.StatusNotFound, user)
 		return
 	}
 
-	// Mengambil data pengguna berdasarkan informasi yang ada pada token (misalnya: phoneNumber atau id)
-	var storedUser model.Userdomyikado
-	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phonenumber": decodedData.Id}).Decode(&storedUser)
-	if err != nil {
-		response := model.Response{
-			Status:   "Error",
-			Response: "User not found",
-		}
-		at.WriteJSON(respw, http.StatusNotFound, response)
-		return
-	}
-
-	// Mengembalikan data pengguna sebagai response
+	// Return the user data in the response
 	response := map[string]interface{}{
-		"message": "User data fetched successfully",
-		"name":    storedUser.Name,
-		"email":   storedUser.Email,
-		"phone":   storedUser.PhoneNumber,
-		"team":    storedUser.Team,
-		"scope":   storedUser.Scope,
-		"antrian": storedUser.JumlahAntrian,
+		"message": "User data retrieved successfully",
+		"name":    user.Name,
+		"email":   user.Email,
+		"phone":   user.PhoneNumber,
+		"team":    user.Team,
+		"scope":   user.Scope,
+		"antrian": user.JumlahAntrian,
 	}
 
 	at.WriteJSON(respw, http.StatusOK, response)
