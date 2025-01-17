@@ -251,11 +251,11 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/all/pesanan":
 		controller.GetAllPesanan(w, r)
 	// Get Pemesanan By Id
-	case method == "GET" && path == "/pemesanan/id":
-		controller.GetPemesananById(w, r)
+	// case method == "GET" && path == "/pemesanan/id":
+	// 	controller.GetPemesananById(w, r)
 	// Delete Pemesanan
-	case method == "DELETE" && path == "/pemesanan/delete":
-		controller.DeleteDataPemesanan(w, r)
+	// case method == "DELETE" && path == "/pemesanan/delete":
+	// 	controller.DeleteDataPemesanan(w, r)
 
 	// PEMBAYARAN
 	// Insert Pembayaran
