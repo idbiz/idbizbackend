@@ -201,23 +201,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/auth/users":
 		controller.GetUser(w, r)
 
-	// DESIGN CATEGORY
-	// Insert Design Category
-	case method == "POST" && path == "/insert/design-category":
-		controller.InsertDesignCategory(w, r)
-	// All Design Category
-	case method == "GET" && path == "/design-category":
-		controller.GetAllDesignCategory(w, r)
-	// Get Design Category By Id
-	case method == "GET" && path == "/design-category/id":
-		controller.GetDesignCategoryById(w, r)
-	// Update Design Category
-	case method == "PUT" && path == "/update/design-category":
-		controller.UpdateDesignCategory(w, r)
-	// Delete Design Category
-	case method == "DELETE" && path == "/design-category/delete":
-		controller.DeleteDataDesignCategory(w, r)
-
 	// FEEDBACK CATEGORY
 	// Insert Feedback Category
 	case method == "POST" && path == "/insert/feedback-category":
@@ -231,17 +214,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Delete Feedback Category
 	case method == "DELETE" && path == "/feedback-category/delete":
 		controller.DeleteDataFeedbackCategory(w, r)
-
-	// FEEDBACK
-	// Insert Feedback
-	case method == "POST" && path == "/insert/feedback":
-		controller.InsertFeedback(w, r)
-	// All Feedback Category
-	case method == "GET" && path == "/feedback":
-		controller.GetAllFeedback(w, r)
-	// Get Feedback Category By Id
-	case method == "GET" && path == "/feedback/id":
-		controller.GetFeedbackById(w, r)
 
 	// PEMESANAN
 	// Insert Pemesanan
