@@ -653,6 +653,7 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate token
 	encryptedToken, err := watoken.EncodeforHours(storedUser.PhoneNumber, storedUser.Name, config.PRIVATEKEY, 18)
 	if err != nil {
 		var respn model.Response
@@ -662,16 +663,10 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set token in cookie
-	http.SetCookie(respw, &http.Cookie{
-		Name:     "login",
-		Value:    encryptedToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true, // Set to true in production with HTTPS
-		Expires:  time.Now().Add(18 * time.Hour),
-	})
+	// Set token in header
+	respw.Header().Set("login", encryptedToken)
 
+	// Send the response back with user data
 	response := map[string]interface{}{
 		"message": "Login successful",
 		"name":    storedUser.Name,
@@ -684,6 +679,7 @@ func LoginAkunDesigner(respw http.ResponseWriter, r *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
 
 func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
 	var users []model.Userdomyikado
