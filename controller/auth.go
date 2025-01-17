@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -623,61 +624,56 @@ func RegisterAkun(respw http.ResponseWriter, r *http.Request) {
 func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 	var userRequest model.Userdomyikado
 
-	// Decode the incoming request to extract user credentials
+	// Decode request
 	if err := json.NewDecoder(r.Body).Decode(&userRequest); err != nil {
-		response := model.Response{
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
 			Status:   "Invalid Request",
 			Response: err.Error(),
-		}
-		at.WriteJSON(respw, http.StatusBadRequest, response)
+		})
 		return
 	}
+	log.Printf("User Request: %+v\n", userRequest)
 
-	// Fetch the user from the database using the provided email
+	// Fetch user from database
 	var storedUser model.Userdomyikado
 	err := config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: User not found",
-			Response: "Error: " + err.Error(),
+		if err == mongo.ErrNoDocuments {
+			at.WriteJSON(respw, http.StatusNotFound, model.Response{
+				Status:   "Error: User not found",
+				Response: "No user with the provided email",
+			})
+		} else {
+			at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+				Status:   "Database Error",
+				Response: err.Error(),
+			})
 		}
-		at.WriteJSON(respw, http.StatusNotFound, response)
 		return
 	}
+	log.Printf("Stored User: %+v\n", storedUser)
 
-	// Compare the provided password with the stored hashed password
+	// Verify password
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(userRequest.Password))
 	if err != nil {
-		response := model.Response{
-			Status:   "Failed to verify password",
-			Response: "Invalid password",
-		}
-		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		at.WriteJSON(respw, http.StatusUnauthorized, model.Response{
+			Status:   "Invalid Credentials",
+			Response: "Password mismatch",
+		})
 		return
 	}
 
-	// Generate an encrypted token using the WA token package
+	// Generate token
 	encryptedToken, err := watoken.EncodeforHours(storedUser.PhoneNumber, storedUser.Name, config.PRIVATEKEY, 18)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: Token generation failed",
-			Response: "Error: " + err.Error(),
-		}
-		at.WriteJSON(respw, http.StatusInternalServerError, response)
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Token Generation Failed",
+			Response: err.Error(),
+		})
 		return
 	}
 
-	// Set the token in a secure, HTTP-only cookie
-	http.SetCookie(respw, &http.Cookie{
-		Name:     "login",
-		Value:    encryptedToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true, // Ensure this is set to true when using HTTPS in production
-		Expires:  time.Now().Add(18 * time.Hour), // Set expiration to 18 hours
-	})
-
-	// Prepare the success response with user data
+	// Respond with user data and token
 	response := map[string]interface{}{
 		"message": "Login successful",
 		"name":    storedUser.Name,
@@ -686,9 +682,8 @@ func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 		"team":    storedUser.Team,
 		"scope":   storedUser.Scope,
 		"antrian": storedUser.JumlahAntrian,
+		"token":   encryptedToken,
 	}
-
-	// Send the success response with the user data
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
@@ -897,20 +892,21 @@ func RegisterAkunAdmin(respw http.ResponseWriter, r *http.Request) {
 
 func GetUser(respw http.ResponseWriter, r *http.Request) {
 	// Retrieve the WA token from the header (or cookies if it's stored there)
-	token := at.GetLoginFromHeader(r) // Assuming the token is in the header
+	// token := at.GetLoginFromHeader(r) // Assuming the token is in the header
 
 	// Decode the WA token (use the appropriate method based on your token type)
-	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, token)
+	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(r))
 	if err != nil {
-		// If the token is invalid, return an error response
-		response := model.Response{
-			Status:   "Unauthorized",
-			Response: "Invalid token: " + err.Error(),
-			Info:     config.PublicKeyWhatsAuth,
-			Location: "Decode Token Error: " + token,
+		payload, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(r))
+		if err != nil {
+			var respn model.Response
+			respn.Status = "Error: Token Tidak Valid"
+			respn.Info = at.GetSecretFromHeader(r)
+			respn.Location = "Decode Token Error"
+			respn.Response = err.Error()
+			at.WriteJSON(respw, http.StatusForbidden, respn)
+			return
 		}
-		at.WriteJSON(respw, http.StatusForbidden, response)
-		return
 	}
 
 	// Use the phone number from the token payload (assuming it's in the "Id" field)
@@ -940,4 +936,3 @@ func GetUser(respw http.ResponseWriter, r *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
-

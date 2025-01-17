@@ -1,13 +1,12 @@
 package config
 
 import (
-	"os"
+	"log"
 
 	"github.com/gocroot/helper/atdb"
-
 )
 
-var MongoString string = os.Getenv("MONGOSTRING")
+var MongoString string = "mongodb+srv://idbiz:OTBmC4Bcs9AyUdjw@idbiz.bphmr.mongodb.net/"
 
 var mongoinfo = atdb.DBInfo{
 	DBString: MongoString,
@@ -16,8 +15,16 @@ var mongoinfo = atdb.DBInfo{
 
 var Mongoconn, ErrorMongoconn = atdb.MongoConnect(mongoinfo)
 
+func init() {
+	if ErrorMongoconn != nil {
+		log.Printf("Failed to connect to MongoDB (idbizdevelop): %v\n", ErrorMongoconn)
+	} else {
+		log.Println("Successfully connected to MongoDB (idbizdevelop)")
+	}
+}
+
 // Geospacial Database
-var MongoStringGeo string = os.Getenv("MONGOSTRINGGEO")
+var MongoStringGeo string = "mongodb+srv://idbiz:OTBmC4Bcs9AyUdjw@idbiz.bphmr.mongodb.net/"
 
 var mongoinfoGeo = atdb.DBInfo{
 	DBString: MongoStringGeo,
