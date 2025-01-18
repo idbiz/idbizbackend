@@ -936,3 +936,15 @@ func GetUser(respw http.ResponseWriter, r *http.Request) {
 
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
+func Logout(respw http.ResponseWriter, r *http.Request) {
+	// Clear the token from the client (e.g., by setting an empty token in the header or cookie)
+	// at.ClearLoginFromHeader(respw) // Assuming the token is in the header
+
+	// Respond with a success message
+	response := model.Response{
+		Status:   "Success",
+		Response: "User logged out successfully",
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
