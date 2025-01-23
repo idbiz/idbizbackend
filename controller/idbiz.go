@@ -1,13 +1,19 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+	// "github.com/joho/godotenv"
 	"github.com/kimseokgis/backend-ai/helper"
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
@@ -576,4 +582,98 @@ func UpdatePesanStatus(respw http.ResponseWriter, req *http.Request) {
 		Status:   "Success",
 		Location: "",
 	})
+}
+
+// UploadtoGithub
+func UploadtoGithub(respw http.ResponseWriter, req *http.Request) {
+	// Baca file dari form-data
+	req.ParseMultipartForm(10 << 20) // Maksimal ukuran file 10 MB
+	file, fileHeader, err := req.FormFile("file")
+	if err != nil {
+		http.Error(respw, "Gagal membaca file dari form-data: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Baca konten file
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(respw, "Gagal membaca konten file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Encode konten file ke Base64
+	encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
+
+	// Pesan commit dari form-data (opsional)
+	commitMessage := req.FormValue("message")
+	if commitMessage == "" {
+		commitMessage = "Menambahkan file baru"
+	}
+
+	// Nama file di GitHub
+	fileName := fileHeader.Filename
+
+	// URL endpoint untuk GitHub API
+	githubAPIURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s",
+		"dibiz",     // Ganti dengan username GitHub Anda
+		"upload",    // Ganti dengan nama repository GitHub Anda
+		fileName,    // Nama file yang diupload
+	)
+
+	// Siapkan payload untuk request
+	payload := map[string]string{
+		"message": commitMessage,
+		"content": encodedContent,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		http.Error(respw, "Gagal mempersiapkan payload: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Baca token dari environment variable
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		http.Error(respw, "Token GitHub tidak ditemukan di environment variable", http.StatusInternalServerError)
+		return
+	}
+
+	// Buat request HTTP PUT ke GitHub
+	client := &http.Client{}
+	request, err := http.NewRequest("PUT", githubAPIURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		http.Error(respw, "Gagal membuat request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Tambahkan header Authorization dengan token
+	request.Header.Set("Authorization", "Bearer "+token)
+	request.Header.Set("Content-Type", "application/json")
+
+	// Kirim request
+	response, err := client.Do(request)
+	if err != nil {
+		http.Error(respw, "Gagal mengunggah file ke GitHub: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer response.Body.Close()
+
+	// Baca respons dari GitHub
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		http.Error(respw, "Gagal membaca respons dari GitHub: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Periksa status code GitHub API
+	if response.StatusCode != http.StatusCreated {
+		http.Error(respw, fmt.Sprintf("Gagal mengunggah file: %s\n%s", response.Status, string(body)), response.StatusCode)
+		return
+	}
+
+	// Berikan respons sukses
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(http.StatusOK)
+	respw.Write([]byte(`{"status":"success", "message":"File berhasil diunggah ke GitHub"}`))
 }
