@@ -13,7 +13,6 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
-	"github.com/joho/godotenv"
 
 	// "github.com/joho/godotenv"
 	"github.com/kimseokgis/backend-ai/helper"
@@ -634,15 +633,8 @@ func UploadtoGithub(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Muat file .env
-	err = godotenv.Load(".env")
-	if err != nil {
-		http.Error(respw, "Gagal memuat file .env: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	// Baca token dari environment variable
-	token := os.Getenv("GITHUB_TOKEN")
+	token := os.Getenv("GH_ACCESS_TOKEN")
 	if token == "" {
 		http.Error(respw, "Token GitHub tidak ditemukan di environment variable", http.StatusInternalServerError)
 		return
