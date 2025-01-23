@@ -44,3 +44,15 @@ type Pembayaran struct {
 	TanggalPembayaran time.Time          `json:"tanggal_pembayaran,omitempty" bson:"tanggal_pembayaran,omitempty"`
 	BuktiPembayaran   string             `json:"bukti_pembayaran,omitempty" bson:"bukti_pembayaran,omitempty"` // URL atau path ke file bukti pembayaran.
 }
+
+type UploadRequest struct {
+	UserID          string `json:"user_id,omitempty" bson:"user_id,omitempty"`
+	PembayarnID     string `json:"pembayaran_id,omitempty" bson:"pembayaran_id,omitempty"`
+	BuktiPembayaran string `json:"bukti_pembayaran,omitempty" bson:"bukti_pembayaran,omitempty"`
+	FileName        string `json:"file_name,omitempty" bson:"file_name,omitempty"`
+}
+
+type GithubUploadRequest struct {
+	Message string `json:"message,omitempty" bson:"message,omitempty"`
+	Content string `json:"content,omitempty" bson:"content,omitempty"`
+}

@@ -301,7 +301,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/register/admin":
 		controller.RegisterAkunAdmin(w, r)
 	
-	// Google Auth
+	// Upload
+	case method == "POST" && path == "/upload":
+		controller.UploadtoGithub(w, r)
 	default:
 		controller.NotFound(w, r)
 	}
