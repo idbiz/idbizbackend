@@ -635,7 +635,7 @@ func UploadtoGithub(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Muat file .env
-	err = godotenv.Load()
+	err = godotenv.Load(".env")
 	if err != nil {
 		http.Error(respw, "Gagal memuat file .env: "+err.Error(), http.StatusInternalServerError)
 		return
