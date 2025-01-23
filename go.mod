@@ -9,6 +9,7 @@ require (
 	github.com/aiteung/atdb v0.1.7
 	github.com/go-playground/webhooks v5.17.0+incompatible
 	github.com/google/go-github/v59 v59.0.0
+	github.com/joho/godotenv v1.5.1
 	github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5
 	github.com/kimseokgis/backend-ai v0.0.0-20240731161356-5480aad28fd3
 	github.com/pdfcpu/pdfcpu v0.8.1
