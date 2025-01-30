@@ -204,31 +204,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && path == "/auth/logout":
 		controller.Logout(w, r)
 
-	// PEMESANAN
-	// Insert Pemesanan
-	case method == "POST" && path == "/insert/pesan":
-		controller.CreatePesanan(w, r)
-	// All Pemesanan
-	case method == "GET" && path == "/all/pesanan":
-		controller.GetAllPesanan(w, r)
-	// Get Pemesanan By Id
-	// case method == "GET" && path == "/pemesanan/id":
-	// 	controller.GetPemesananById(w, r)
-	// Delete Pemesanan
-	// case method == "DELETE" && path == "/pemesanan/delete":
-	// 	controller.DeleteDataPemesanan(w, r)
-
-	// PEMBAYARAN
-	// Insert Pembayaran
-	case method == "POST" && path == "/insert/pembayaran":
-		controller.CreatePembayaran(w, r)
-	// // Get Transaksi Pembayaran By Id
-	// case method == "GET" && path == "/pembayaran/id":
-	// 	controller.GetPembayaranById(w, r)
-	// // All Transaksi Pembayaran
-	// case method == "GET" && path == "/pembayaran":
-	// 	controller.GetAllPembayaran(w, r)
-
 	// PORTFOLIO
 	// Insert Portfolio
 	case method == "POST" && path == "/insert/portofolio":
