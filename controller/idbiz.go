@@ -18,6 +18,7 @@ import (
 	"github.com/kimseokgis/backend-ai/helper"
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gocroot/helper/watoken"
 	"github.com/gocroot/model"
@@ -478,6 +479,49 @@ func GetAllPembayaran(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	helper.WriteJSON(respw, http.StatusOK, pembayarans)
+}
+
+func GetPembayaranByID(respw http.ResponseWriter, req *http.Request) {
+	// Decode token untuk otentikasi
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
+	}
+
+	// Ambil ID dari parameter query
+	id := req.URL.Query().Get("id")
+
+	// Konversi ID ke ObjectID MongoDB
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error: ID tidak valid",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	var pembayaran model.Pembayaran
+	filter := bson.M{"_id": objID}
+
+	// Mengambil satu dokumen dari koleksi "pembayaran"
+	pembayaran, err = atdb.GetOneDoc[model.Pembayaran](config.Mongoconn, "pembayaran", filter)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusNotFound, model.Response{
+			Status:   "Error: Pembayaran tidak ditemukan",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	helper.WriteJSON(respw, http.StatusOK, pembayaran)
 }
 
 // ItemPesanan
