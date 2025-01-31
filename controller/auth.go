@@ -929,9 +929,9 @@ func GetUser(respw http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(respw http.ResponseWriter, r *http.Request) {
-	// Extract token from request (if stored in header or cookie)
-	_, err := r.Cookie("login")
-	if err != nil {
+	// Extract token from request cookies
+	cookie, err := r.Cookie("login")
+	if err != nil || cookie.Value == "" {
 		at.WriteJSON(respw, http.StatusUnauthorized, model.Response{
 			Status:   "Unauthorized",
 			Response: "No active session found",
@@ -939,20 +939,17 @@ func Logout(respw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Clear the token from the client by setting an expired cookie
+	// Clear the login cookie
 	http.SetCookie(respw, &http.Cookie{
 		Name:     "login",
 		Value:    "",
 		Path:     "/",
-		Expires:  time.Unix(0, 0), // Expired in the past
+		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Secure:   true,
 	})
 
-	// Optionally, you can remove any Authorization header (if relevant)
-	respw.Header().Del("Authorization")
-
-	// Respond with a success message
+	// Respond with success
 	response := model.Response{
 		Status:   "Success",
 		Response: "User logged out successfully",
