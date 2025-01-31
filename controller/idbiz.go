@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+	"github.com/joho/godotenv"
 
 	// "github.com/joho/godotenv"
 	"github.com/kimseokgis/backend-ai/helper"
@@ -629,96 +631,274 @@ func UpdatePesanStatus(respw http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// UploadtoGithub
+
+// Check if file exists on GitHub
+func getFileSha(apiURL, token string) (string, error) {
+    req, err := http.NewRequest("GET", apiURL, nil)
+    if err != nil {
+        return "", err
+    }
+    req.Header.Set("Authorization", "Bearer "+token)
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode == http.StatusNotFound {
+        // File doesn't exist
+        return "", nil
+    } else if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return "", fmt.Errorf("GitHub API error: %s\n%s", resp.Status, string(body))
+    }
+
+    var fileData map[string]interface{}
+    err = json.NewDecoder(resp.Body).Decode(&fileData)
+    if err != nil {
+        return "", err
+    }
+
+    sha, ok := fileData["sha"].(string)
+    if !ok {
+        return "", fmt.Errorf("failed to extract sha from response")
+    }
+
+    return sha, nil
+}
+
+// UploadtoGithub uploads a file to GitHub repository
 func UploadtoGithub(respw http.ResponseWriter, req *http.Request) {
-	// Baca file dari form-data
-	req.ParseMultipartForm(10 << 20) // Maksimal ukuran file 10 MB
+    // Load environment variables
+    err := godotenv.Load("../.env")
+    if err != nil {
+        http.Error(respw, "Failed to load .env file: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    githubOwner := os.Getenv("GITHUB_OWNER")
+    githubRepo := os.Getenv("GITHUB_REPO")
+    githubToken := os.Getenv("GITHUB_TOKEN")
+
+    // Validate environment variables
+    if githubOwner == "" || githubRepo == "" || githubToken == "" {
+        http.Error(respw, "Missing environment variables (GITHUB_OWNER, GITHUB_REPO, or GITHUB_TOKEN)", http.StatusInternalServerError)
+        return
+    }
+
+    // Parse multipart form data
+    req.ParseMultipartForm(10 << 20) // Max file size 10 MB
+    file, fileHeader, err := req.FormFile("file")
+    if err != nil {
+        http.Error(respw, "Failed to read file from form-data: "+err.Error(), http.StatusBadRequest)
+        return
+    }
+    defer file.Close()
+
+    // Read file content
+    fileBytes, err := io.ReadAll(file)
+    if err != nil {
+        http.Error(respw, "Failed to read file content: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Encode file content to Base64
+    encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
+
+    // Generate commit message
+    commitMessage := req.FormValue("message")
+    if commitMessage == "" {
+        commitMessage = "Upload file: " + fileHeader.Filename
+    }
+
+    // Build API URL
+    filePath := "upload/" + fileHeader.Filename
+    apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", githubOwner, githubRepo, filePath)
+
+    // Check if file exists
+    sha, err := getFileSha(apiURL, githubToken)
+    if err != nil {
+        http.Error(respw, "Failed to check file existence: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Prepare payload
+    payload := map[string]string{
+        "message": commitMessage,
+        "content": encodedContent,
+    }
+    if sha != "" {
+        payload["sha"] = sha // Include sha if file exists
+    }
+    jsonData, err := json.Marshal(payload)
+    if err != nil {
+        http.Error(respw, "Failed to marshal payload: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Create HTTP PUT request
+    reqGithub, err := http.NewRequest("PUT", apiURL, bytes.NewBuffer(jsonData))
+    if err != nil {
+        http.Error(respw, "Failed to create HTTP request: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+    reqGithub.Header.Set("Authorization", "Bearer "+githubToken)
+    reqGithub.Header.Set("Content-Type", "application/json")
+
+    // Execute the request
+    client := &http.Client{}
+    resp, err := client.Do(reqGithub)
+    if err != nil {
+        http.Error(respw, "Failed to send request to GitHub: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
+
+    // Read response body
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        http.Error(respw, "Failed to read response body: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Check response status
+    if resp.StatusCode != http.StatusCreated {
+        http.Error(respw, fmt.Sprintf("GitHub API error: %s\n%s", resp.Status, string(body)), resp.StatusCode)
+        return
+    }
+
+    // Respond with success
+    respw.Header().Set("Content-Type", "application/json")
+    respw.WriteHeader(http.StatusOK)
+    respw.Write([]byte(`{"status":"success", "message":"File successfully uploaded to GitHub"}`))
+}
+
+func PostPesanan(respw http.ResponseWriter, req *http.Request) {
+	// Load environment variables
+	err := godotenv.Load("../.env")
+	if err != nil {
+		http.Error(respw, "Failed to load .env file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	githubOwner := os.Getenv("GITHUB_OWNER")
+	githubRepo := os.Getenv("GITHUB_REPO")
+	githubToken := os.Getenv("GITHUB_TOKEN")
+
+	// Validate environment variables
+	if githubOwner == "" || githubRepo == "" || githubToken == "" {
+		http.Error(respw, "Missing environment variables (GITHUB_OWNER, GITHUB_REPO, or GITHUB_TOKEN)", http.StatusInternalServerError)
+		return
+	}
+
+	// Parse multipart form data
+	req.ParseMultipartForm(10 << 20) // Max file size 10 MB
 	file, fileHeader, err := req.FormFile("file")
 	if err != nil {
-		http.Error(respw, "Gagal membaca file dari form-data: "+err.Error(), http.StatusBadRequest)
+		http.Error(respw, "Failed to read file from form-data: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	// Baca konten file
+	// Read file content
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(respw, "Gagal membaca konten file: "+err.Error(), http.StatusInternalServerError)
+		http.Error(respw, "Failed to read file content: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Encode konten file ke Base64
+	// Encode file content to Base64
 	encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
 
-	// Pesan commit dari form-data (opsional)
-	commitMessage := req.FormValue("message")
-	if commitMessage == "" {
-		commitMessage = "Menambahkan file baru"
-	}
+	// Generate file upload path
+	filePath := "bukti_pembayaran/" + fileHeader.Filename
 
-	// Nama file di GitHub
-	fileName := fileHeader.Filename
+	// Build API URL
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", githubOwner, githubRepo, filePath)
 
-	// URL endpoint untuk GitHub API
-	githubAPIURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s",
-		"dibiz",     // Ganti dengan username GitHub Anda
-		"upload",    // Ganti dengan nama repository GitHub Anda
-		fileName,    // Nama file yang diupload
-	)
-
-	// Siapkan payload untuk request
+	// Prepare payload for GitHub
 	payload := map[string]string{
-		"message": commitMessage,
+		"message": "Upload bukti pembayaran: " + fileHeader.Filename,
 		"content": encodedContent,
 	}
-	payloadBytes, err := json.Marshal(payload)
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		http.Error(respw, "Gagal mempersiapkan payload: "+err.Error(), http.StatusInternalServerError)
+		http.Error(respw, "Failed to marshal payload: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Baca token dari environment variable
-	token := os.Getenv("GH_ACCESS_TOKEN")
-	if token == "" {
-		http.Error(respw, "Token GitHub tidak ditemukan di environment variable", http.StatusInternalServerError)
+	// Create HTTP PUT request for GitHub
+	reqGithub, err := http.NewRequest("PUT", apiURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		http.Error(respw, "Failed to create HTTP request: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	reqGithub.Header.Set("Authorization", "Bearer "+githubToken)
+	reqGithub.Header.Set("Content-Type", "application/json")
 
-	// Buat request HTTP PUT ke GitHub
+	// Send request to GitHub
 	client := &http.Client{}
-	request, err := http.NewRequest("PUT", githubAPIURL, bytes.NewBuffer(payloadBytes))
+	respGithub, err := client.Do(reqGithub)
 	if err != nil {
-		http.Error(respw, "Gagal membuat request: "+err.Error(), http.StatusInternalServerError)
+		http.Error(respw, "Failed to upload file to GitHub: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer respGithub.Body.Close()
+
+	// Check response from GitHub
+	if respGithub.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(respGithub.Body)
+		http.Error(respw, "GitHub upload failed: "+string(body), http.StatusInternalServerError)
 		return
 	}
 
-	// Tambahkan header Authorization dengan token
-	request.Header.Set("Authorization", "Bearer "+token)
-	request.Header.Set("Content-Type", "application/json")
-
-	// Kirim request
-	response, err := client.Do(request)
+	// Extract file URL from GitHub response
+	var githubResp map[string]interface{}
+	err = json.NewDecoder(respGithub.Body).Decode(&githubResp)
 	if err != nil {
-		http.Error(respw, "Gagal mengunggah file ke GitHub: "+err.Error(), http.StatusInternalServerError)
+		http.Error(respw, "Failed to parse GitHub response: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer response.Body.Close()
+	buktiPembayaranURL, _ := githubResp["content"].(map[string]interface{})["html_url"].(string)
 
-	// Baca respons dari GitHub
-	body, err := io.ReadAll(response.Body)
+	// Parse additional form data into Pesanan struct
+	var daftarDesain []model.Portofolio
+	err = json.Unmarshal([]byte(req.FormValue("daftar_desain")), &daftarDesain)
 	if err != nil {
-		http.Error(respw, "Gagal membaca respons dari GitHub: "+err.Error(), http.StatusInternalServerError)
+		http.Error(respw, "Invalid daftar_desain format: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Periksa status code GitHub API
-	if response.StatusCode != http.StatusCreated {
-		http.Error(respw, fmt.Sprintf("Gagal mengunggah file: %s\n%s", response.Status, string(body)), response.StatusCode)
+	pesanan := model.Pesanan{
+		ID:             primitive.NewObjectID(),
+		NamaPemesan:    req.FormValue("nama_pemesan"),
+		DaftarDesain:   daftarDesain,
+		TanggalPesanan: time.Now(),
+		StatusPesanan:  "Pending",
+		Pembayaran:     buktiPembayaranURL,
+		CatatanPesanan: req.FormValue("catatan_pesanan"),
+		TotalHarga:     req.FormValue("total_harga"),
+	}
+
+	// Validate required fields
+	if pesanan.NamaPemesan == "" || len(pesanan.DaftarDesain) == 0 || pesanan.TotalHarga == "" {
+		http.Error(respw, "Missing required fields in Pesanan data", http.StatusBadRequest)
 		return
 	}
 
-	// Berikan respons sukses
+	// Insert pesanan into database
+	// Define pesananCollection
+	pesananCollection := config.Mongoconn.Collection("pesanan")
+	
+	result, err := pesananCollection.InsertOne(context.TODO(), pesanan)
+	if err != nil {
+		http.Error(respw, "Failed to save pesanan: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with Pesanan data
 	respw.Header().Set("Content-Type", "application/json")
-	respw.WriteHeader(http.StatusOK)
-	respw.Write([]byte(`{"status":"success", "message":"File berhasil diunggah ke GitHub"}`))
+	json.NewEncoder(respw).Encode(result)
 }
