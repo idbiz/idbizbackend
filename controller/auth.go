@@ -770,123 +770,140 @@ func GetAllAkun(respw http.ResponseWriter, r *http.Request) {
 }
 
 func LoginAkunAdmin(respw http.ResponseWriter, r *http.Request) {
-	var adminRequest model.AdminRequest
+	var userRequest model.Userdomyikado
 
-	// Decode incoming JSON request into adminRequest struct
-	if err := json.NewDecoder(r.Body).Decode(&adminRequest); err != nil {
-		response := model.Response{
+	// Decode request
+	if err := json.NewDecoder(r.Body).Decode(&userRequest); err != nil {
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
 			Status:   "Invalid Request",
 			Response: err.Error(),
-		}
-		at.WriteJSON(respw, http.StatusBadRequest, response)
+		})
 		return
 	}
+	log.Printf("User Request: %+v\n", userRequest)
 
-	// Find the admin in the database using the provided Username
-	var storedAdmin model.Admin
-	err := config.Mongoconn.Collection("admin").FindOne(context.Background(), bson.M{"username": adminRequest.Username}).Decode(&storedAdmin)
+	// Fetch user from database
+	var storedUser model.Userdomyikado
+	err := config.Mongoconn.Collection("admin").FindOne(context.Background(), bson.M{"email": userRequest.Email}).Decode(&storedUser)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: Admin not found",
-			Response: "Error: " + err.Error(),
+		if err == mongo.ErrNoDocuments {
+			at.WriteJSON(respw, http.StatusNotFound, model.Response{
+				Status:   "Error: User not found",
+				Response: "No user with the provided email",
+			})
+		} else {
+			at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+				Status:   "Database Error",
+				Response: err.Error(),
+			})
 		}
-		at.WriteJSON(respw, http.StatusNotFound, response)
 		return
 	}
+	log.Printf("Stored User: %+v\n", storedUser)
 
-	// Compare the provided password with the stored hash
-	err = bcrypt.CompareHashAndPassword([]byte(storedAdmin.Password), []byte(adminRequest.Password))
+	// Verify password
+	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(userRequest.Password))
 	if err != nil {
-		response := model.Response{
-			Status:   "Failed to verify password",
-			Response: "Invalid password",
-		}
-		at.WriteJSON(respw, http.StatusUnauthorized, response)
+		at.WriteJSON(respw, http.StatusUnauthorized, model.Response{
+			Status:   "Invalid Credentials",
+			Response: "Password mismatch",
+		})
 		return
 	}
 
-	// Generate a token for the admin to access the dashboard
-	encryptedToken, err := watoken.EncodeforHours(storedAdmin.Username, "Admin", config.PRIVATEKEY, 18)
+	// Generate token
+	encryptedToken, err := watoken.EncodeforHours(storedUser.PhoneNumber, storedUser.Name, config.PRIVATEKEY, 18)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: Token generation failed",
-			Response: ", Error: " + err.Error(),
-		}
-		at.WriteJSON(respw, http.StatusNotFound, response)
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Token Generation Failed",
+			Response: err.Error(),
+		})
 		return
 	}
 
-	// Response with the login success and token for the admin
+	// Respond with user data and token
 	response := map[string]interface{}{
-		"message":       "Login successful",
-		"username":      storedAdmin.Username,
-		"role":          storedAdmin.Role,
-		"token":         encryptedToken,
-		"dashboardLink": "/admin/dashboard", // Example link to dashboard
+		"message": "Login successful",
+		"name":    storedUser.Name,
+		"email":   storedUser.Email,
+		"phone":   storedUser.PhoneNumber,
+		"team":    storedUser.Team,
+		"scope":   storedUser.Scope,
+		"antrian": storedUser.JumlahAntrian,
+		"token":   encryptedToken,
 	}
-
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
 func RegisterAkunAdmin(respw http.ResponseWriter, r *http.Request) {
-	var adminRequest model.AdminRequest
+	var request model.Userdomyikado
 
-	// Decode incoming JSON request into adminRequest struct
-	if err := json.NewDecoder(r.Body).Decode(&adminRequest); err != nil {
-		response := model.Response{
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		respn := model.Response{
 			Status:   "Invalid Request",
 			Response: err.Error(),
 		}
-		at.WriteJSON(respw, http.StatusBadRequest, response)
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
 		return
 	}
 
-	// Check if username already exists
-	var existingAdmin model.Admin
-	err := config.Mongoconn.Collection("admin").FindOne(context.Background(), bson.M{"username": adminRequest.Username}).Decode(&existingAdmin)
-	if err == nil {
-		response := model.Response{
-			Status:   "Error: Username already exists",
-			Response: "The provided username is already in use.",
+	re := regexp.MustCompile(`^62\d{9,15}$`)
+	if !re.MatchString(request.PhoneNumber) {
+		respn := model.Response{
+			Status:   "Bad Request",
+			Response: "Invalid phone number format",
 		}
-		at.WriteJSON(respw, http.StatusConflict, response)
+		at.WriteJSON(respw, http.StatusBadRequest, respn)
 		return
 	}
 
-	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminRequest.Password), bcrypt.DefaultCost)
+	hashedPassword, err := auth.HashPassword(request.Password)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: Failed to hash password",
-			Response: "Error: " + err.Error(),
+		respn := model.Response{
+			Status:   "Failed to hash password",
+			Response: err.Error(),
 		}
-		at.WriteJSON(respw, http.StatusInternalServerError, response)
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
 		return
 	}
 
-	// Create a new admin model
-	newAdmin := model.Admin{
-		Username: adminRequest.Username,
-		Password: string(hashedPassword),
-		Role:     "Admin", // Default role for admin
+	role := request.Role
+	if role == "" {
+		role = "admin"
+	}
+	newUser := model.Userdomyikado{
+		Name:          request.Name,
+		PhoneNumber:   request.PhoneNumber,
+		Email:         request.Email,
+		Team:          "pd.my.id",
+		Scope:         "dev",
+		LinkedDevice:  "v4.public.eyJhbGlhcyI6IlJvbGx5IE1hdWxhbmEgQXdhbmdnYSIsImV4cCI6IjIwMjktMDgtMDlUMTQ6MzQ6MjlaIiwiaWF0IjoiMjAyNC0wOC0wOVQwODozNDoyOVoiLCJpZCI6IjYyODEzMTIwMDAzMDAiLCJuYmYiOiIyMDI0LTA4LTA5VDA4OjM0OjI5WiJ9FXnQi5vnQ7YXHteepJ14Xcc-wPc0PLQ0n4LSbGFijfdkStVeD6QIDuwQGeaq7xETWmmtFXjfkmmfDG0WHmAlBA",
+		JumlahAntrian: 7,
+		Password:      hashedPassword,
+		Role:          role,
 	}
 
-	// Insert the new admin into the database
-	_, err = config.Mongoconn.Collection("admin").InsertOne(context.Background(), newAdmin)
+	_, err = atdb.InsertOneDoc(config.Mongoconn, "admin", newUser)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: Failed to register admin",
-			Response: "Error: " + err.Error(),
+		respn := model.Response{
+			Status:   "Failed to insert new user",
+			Response: err.Error(),
 		}
-		at.WriteJSON(respw, http.StatusInternalServerError, response)
+		at.WriteJSON(respw, http.StatusInternalServerError, respn)
 		return
 	}
 
-	// Respond with success message
-	response := model.Response{
-		Status:   "Success",
-		Response: "Admin registered successfully",
+	response := map[string]interface{}{
+		"message":       "New user created successfully",
+		"name":          newUser.Name,
+		"phonenumber":   newUser.PhoneNumber,
+		"email":         newUser.Email,
+		"team":          newUser.Team,
+		"scope":         newUser.Scope,
+		"jumlahAntrian": newUser.JumlahAntrian,
+		"role":          newUser.Role,
 	}
+
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
