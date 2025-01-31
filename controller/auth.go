@@ -687,32 +687,6 @@ func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
-func GetAkunCustomer(respw http.ResponseWriter, r *http.Request) {
-	var users []model.Userdomyikado
-	cursor, err := config.Mongoconn.Collection("user").Find(context.Background(), bson.M{})
-	if err != nil {
-		response := model.Response{
-			Status:   "Error: Gagal mengambil data user",
-			Response: "Error: " + err.Error(),
-		}
-		at.WriteJSON(respw, http.StatusNotFound, response)
-		return
-	}
-	defer cursor.Close(context.Background())
-
-	for cursor.Next(context.Background()) {
-		var user model.Userdomyikado
-		cursor.Decode(&user)
-		users = append(users, user)
-	}
-
-	response := map[string]interface{}{
-		"message": "Data berhasil diambil",
-		"user":    users,
-	}
-	at.WriteJSON(respw, http.StatusOK, response)
-}
-
 // fungsi get akun customer by id diambil dari token login
 func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
 	decryptedToken, err := watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(r))
@@ -955,8 +929,28 @@ func GetUser(respw http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(respw http.ResponseWriter, r *http.Request) {
-	// Clear the token from the client (e.g., by setting an empty token in the header or cookie)
-	// at.ClearLoginFromHeader(respw) // Assuming the token is in the header
+	// Extract token from request (if stored in header or cookie)
+	_, err := r.Cookie("login")
+	if err != nil {
+		at.WriteJSON(respw, http.StatusUnauthorized, model.Response{
+			Status:   "Unauthorized",
+			Response: "No active session found",
+		})
+		return
+	}
+
+	// Clear the token from the client by setting an expired cookie
+	http.SetCookie(respw, &http.Cookie{
+		Name:     "login",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0), // Expired in the past
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	// Optionally, you can remove any Authorization header (if relevant)
+	respw.Header().Del("Authorization")
 
 	// Respond with a success message
 	response := model.Response{
@@ -965,3 +959,4 @@ func Logout(respw http.ResponseWriter, r *http.Request) {
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
+
