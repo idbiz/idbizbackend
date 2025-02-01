@@ -279,6 +279,17 @@ func GetTransaksiByID(respw http.ResponseWriter, req *http.Request) {
     })
 }
 
+func GetAllTransaksi(respw http.ResponseWriter, req *http.Request) {
+	var resp itmodel.Response
+	orders, err := atdb.GetAllDoc[[]model.Transaksi](config.Mongoconn, "transaksi", bson.M{})
+	if err != nil {
+		resp.Response = err.Error()
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
+		return
+	}
+	helper.WriteJSON(respw, http.StatusOK, orders)
+}
+
 // UploadHandler handles file uploads to GitHub
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
