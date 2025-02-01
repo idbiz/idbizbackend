@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -89,11 +91,14 @@ func GetAllPortofolio(respw http.ResponseWriter, req *http.Request) {
 
 // UpdatePortofolio
 func UpdatePortofolio(respw http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] Memulai proses UpdatePortofolio")
+
 	// Decode token untuk otentikasi
 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 	if err != nil {
 		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
 		if err != nil {
+			log.Println("[ERROR] Token tidak valid")
 			at.WriteJSON(respw, http.StatusForbidden, model.Response{
 				Status:   "Error: Token Tidak Valid",
 				Response: err.Error(),
@@ -102,31 +107,61 @@ func UpdatePortofolio(respw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// Ambil ID dari parameter URL
+	// Ambil ID dari URL Path
 	id := req.URL.Query().Get("id")
-
-	// Decode request body ke dalam struct Portofolio
-	var portofolio model.Portofolio
-	if err := json.NewDecoder(req.Body).Decode(&portofolio); err != nil {
-		at.WriteJSON(respw, http.StatusBadRequest, model.Response{Status: "Error", Response: err.Error()})
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
 		return
 	}
 
-	// Update dokumen portofolio berdasarkan ID
-	filter := bson.M{"_id": id}
-	update := bson.M{"$set": portofolio}
+	// Decode request body ke dalam struct Portofolio
+	var portofolio struct {
+		NamaDesain string `json:"nama_desain"`
+		Deskripsi  string `json:"deskripsi"`
+		Gambar     string `json:"gambar"`
+		Kategori   string `json:"kategori"`
+		Harga      string `json:"harga"`
+	}
+	if err := json.NewDecoder(req.Body).Decode(&portofolio); err != nil {
+		log.Printf("[ERROR] Gagal mendekode request body: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
 
-	_, err = atdb.UpdateOneDoc(config.Mongoconn, "portofolio", filter, update)
+	// Hapus field `_id` dari update
+	updateData := bson.M{
+		"nama_desain": portofolio.NamaDesain,
+		"deskripsi":   portofolio.Deskripsi,
+		"gambar":      portofolio.Gambar,
+		"kategori":    portofolio.Kategori,
+		"harga":       portofolio.Harga,
+	}
+
+	// update := bson.M{"$set": updateData}
+
+	// Update dokumen portofolio berdasarkan ID
+	collection := config.Mongoconn.Collection("portofolio")
+	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objID}, bson.M{"$set": updateData})
 	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
+		log.Printf("[ERROR] Gagal memperbarui portofolio: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
 		return
 	}
 
 	at.WriteJSON(respw, http.StatusOK, model.Response{
 		Response: "Portofolio berhasil diperbarui",
-		Info:     "",
 		Status:   "Success",
-		Location: "",
 	})
 }
 
@@ -147,13 +182,26 @@ func DeletePortofolio(respw http.ResponseWriter, req *http.Request) {
 
 	// Ambil ID dari parameter URL
 	id := req.URL.Query().Get("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
+		return
+	}
 
 	// Hapus dokumen portofolio berdasarkan ID
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": objID}
 
 	_, err = atdb.DeleteOneDoc(config.Mongoconn, "portofolio", filter)
 	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
+		log.Printf("[ERROR] Gagal menghapus portofolio: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
 		return
 	}
 
@@ -166,11 +214,16 @@ func DeletePortofolio(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPortofolioByID(respw http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] Memulai proses GetPortofolioByID")
+
 	// Decode token untuk otentikasi
+	log.Println("[INFO] Melakukan decoding token untuk otentikasi")
 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 	if err != nil {
+		log.Println("[WARNING] Token pertama tidak valid, mencoba token kedua")
 		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
 		if err != nil {
+			log.Println("[ERROR] Token tidak valid")
 			at.WriteJSON(respw, http.StatusForbidden, model.Response{
 				Status:   "Error: Token Tidak Valid",
 				Response: err.Error(),
@@ -181,16 +234,29 @@ func GetPortofolioByID(respw http.ResponseWriter, req *http.Request) {
 
 	// Ambil ID dari parameter URL
 	id := req.URL.Query().Get("id")
-
-	// Ambil dokumen portofolio berdasarkan ID
-	filter := bson.M{"_id": id}
-
-	portofolio, err := atdb.GetOneDoc[model.Portofolio](config.Mongoconn, "portofolio", filter)
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
 		return
 	}
 
+	filter := bson.M{"_id": objID}
+
+	portofolio, err := atdb.GetOneDoc[model.Portofolio](config.Mongoconn, "portofolio", filter)
+	if err != nil {
+		log.Printf("[ERROR] Gagal mengambil portofolio: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	log.Println("[INFO] Berhasil mengambil portofolio, mengirim respons")
 	at.WriteJSON(respw, http.StatusOK, portofolio)
 }
 
