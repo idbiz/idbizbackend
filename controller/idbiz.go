@@ -1,22 +1,18 @@
 package controller
 
 import (
-	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/helper/utils"
-	"github.com/joho/godotenv"
 
 	// "github.com/joho/godotenv"
 	"github.com/kimseokgis/backend-ai/helper"
@@ -226,413 +222,6 @@ func GetPortofolioByKategori(respw http.ResponseWriter, req *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, portofolios)
 }
 
-// Pesanan
-func CreatePesanan(respw http.ResponseWriter, req *http.Request) {
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			var respn model.Response
-			respn.Status = "Error: Token Tidak Valid"
-			respn.Info = at.GetSecretFromHeader(req)
-			respn.Location = "Decode Token Error"
-			respn.Response = err.Error()
-			at.WriteJSON(respw, http.StatusForbidden, respn)
-			return
-		}
-	}
-
-	var pesanan model.Pesanan
-	if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
-		at.WriteJSON(respw, http.StatusBadRequest, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	// Jika tanggal pesanan ada dalam body JSON, kita akan memformatnya.
-	if pesanan.TanggalPesanan.IsZero() {
-		// Jika tidak ada tanggal, set tanggal saat ini
-		pesanan.TanggalPesanan = time.Now()
-	} else {
-		// Parse tanggal dari JSON dengan format yang sesuai: "DD-MM-YYYY HH:MM"
-		parsedDate, err := time.Parse("02-01-2006 15:04", pesanan.TanggalPesanan.Format("02-01-2006 15:04"))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-			return
-		}
-		pesanan.TanggalPesanan = parsedDate
-	}
-
-	_, err = atdb.InsertOneDoc(config.Mongoconn, "pesanan", pesanan)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Pesanan berhasil disimpan",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
-}
-
-func GetAllPesanan(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	var resp itmodel.Response
-
-	// Mengambil semua dokumen dari koleksi "pesanan"
-	pesanans, err := atdb.GetAllDoc[[]model.Pesanan](config.Mongoconn, "pesanan", bson.M{})
-	if err != nil {
-		resp.Response = err.Error()
-		helper.WriteJSON(respw, http.StatusInternalServerError, resp)
-		return
-	}
-	helper.WriteJSON(respw, http.StatusOK, pesanans)
-}
-
-// UpdatePesanan
-func UpdatePesanan(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	// Ambil ID dari parameter URL
-	id := req.URL.Query().Get("id")
-
-	// Decode request body ke dalam struct Pesanan
-	var pesanan model.Pesanan
-	if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
-		at.WriteJSON(respw, http.StatusBadRequest, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	// Jika tanggal pesanan ada dalam body JSON, kita akan memformatnya.
-	if pesanan.TanggalPesanan.IsZero() {
-		// Jika tidak ada tanggal, set tanggal saat ini
-		pesanan.TanggalPesanan = time.Now()
-	} else {
-		// Parse tanggal dari JSON dengan format yang sesuai: "DD-MM-YYYY HH:MM"
-		parsedDate, err := time.Parse("02-01-2006 15:04", pesanan.TanggalPesanan.Format("02-01-2006 15:04"))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-			return
-		}
-		pesanan.TanggalPesanan = parsedDate
-	}
-
-	// Update pesanan berdasarkan ID
-	filter := bson.M{"_id": id}
-	update := bson.M{"$set": pesanan}
-
-	_, err = atdb.UpdateOneDoc(config.Mongoconn, "pesanan", filter, update)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Pesanan berhasil diperbarui",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
-}
-
-// DeletePesanan
-func DeletePesanan(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	// Ambil ID dari parameter URL
-	id := req.URL.Query().Get("id")
-
-	// Hapus pesanan berdasarkan ID
-	filter := bson.M{"_id": id}
-
-	_, err = atdb.DeleteOneDoc(config.Mongoconn, "pesanan", filter)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Pesanan berhasil dihapus",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
-}
-
-func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	// Ambil ID dari parameter URL
-	id := req.URL.Query().Get("id")
-
-	// Ambil pesanan berdasarkan ID
-	filter := bson.M{"_id": id}
-
-	pesanan, err := atdb.GetOneDoc[model.Pesanan](config.Mongoconn, "pesanan", filter)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, pesanan)
-}
-
-// Pembayaran
-func CreatePembayaran(respw http.ResponseWriter, req *http.Request) {
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			var respn model.Response
-			respn.Status = "Error: Token Tidak Valid"
-			respn.Info = at.GetSecretFromHeader(req)
-			respn.Location = "Decode Token Error"
-			respn.Response = err.Error()
-			at.WriteJSON(respw, http.StatusForbidden, respn)
-			return
-		}
-	}
-
-	var pembayaran model.Pembayaran
-	if err := json.NewDecoder(req.Body).Decode(&pembayaran); err != nil {
-		at.WriteJSON(respw, http.StatusBadRequest, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	_, err = atdb.InsertOneDoc(config.Mongoconn, "pembayaran", pembayaran)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Pembayaran berhasil disimpan",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
-}
-
-func GetAllPembayaran(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	var resp itmodel.Response
-
-	// Mengambil semua dokumen dari koleksi "pembayaran"
-	pembayarans, err := atdb.GetAllDoc[[]model.Pembayaran](config.Mongoconn, "pembayaran", bson.M{})
-	if err != nil {
-		resp.Response = err.Error()
-		helper.WriteJSON(respw, http.StatusInternalServerError, resp)
-		return
-	}
-	helper.WriteJSON(respw, http.StatusOK, pembayarans)
-}
-
-func GetPembayaranByID(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	// Ambil ID dari parameter query
-	id := req.URL.Query().Get("id")
-
-	// Konversi ID ke ObjectID MongoDB
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		helper.WriteJSON(respw, http.StatusBadRequest, model.Response{
-			Status:   "Error: ID tidak valid",
-			Response: err.Error(),
-		})
-		return
-	}
-
-	var pembayaran model.Pembayaran
-	filter := bson.M{"_id": objID}
-
-	// Mengambil satu dokumen dari koleksi "pembayaran"
-	pembayaran, err = atdb.GetOneDoc[model.Pembayaran](config.Mongoconn, "pembayaran", filter)
-	if err != nil {
-		helper.WriteJSON(respw, http.StatusNotFound, model.Response{
-			Status:   "Error: Pembayaran tidak ditemukan",
-			Response: err.Error(),
-		})
-		return
-	}
-
-	helper.WriteJSON(respw, http.StatusOK, pembayaran)
-}
-
-// ItemPesanan
-func CreateItemPesanan(respw http.ResponseWriter, req *http.Request) {
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			var respn model.Response
-			respn.Status = "Error: Token Tidak Valid"
-			respn.Info = at.GetSecretFromHeader(req)
-			respn.Location = "Decode Token Error"
-			respn.Response = err.Error()
-			at.WriteJSON(respw, http.StatusForbidden, respn)
-			return
-		}
-	}
-
-	var itemPesanan model.ItemPesanan
-	if err := json.NewDecoder(req.Body).Decode(&itemPesanan); err != nil {
-		at.WriteJSON(respw, http.StatusBadRequest, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	_, err = atdb.InsertOneDoc(config.Mongoconn, "item_pesanan", itemPesanan)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Item Pesanan berhasil disimpan",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
-}
-
-func GetAllItemPesanan(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	var resp itmodel.Response
-
-	// Mengambil semua dokumen dari koleksi "item_pesanan"
-	itemPesanans, err := atdb.GetAllDoc[[]model.ItemPesanan](config.Mongoconn, "item_pesanan", bson.M{})
-	if err != nil {
-		resp.Response = err.Error()
-		helper.WriteJSON(respw, http.StatusInternalServerError, resp)
-		return
-	}
-	helper.WriteJSON(respw, http.StatusOK, itemPesanans)
-}
-
-// Update Pesan Status
-func UpdatePesanStatus(respw http.ResponseWriter, req *http.Request) {
-	// Decode token untuk otentikasi
-	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
-	if err != nil {
-		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
-		if err != nil {
-			at.WriteJSON(respw, http.StatusForbidden, model.Response{
-				Status:   "Error: Token Tidak Valid",
-				Response: err.Error(),
-			})
-			return
-		}
-	}
-
-	// Ambil ID dari parameter URL
-	id := req.URL.Query().Get("id")
-
-	// Decode request body ke dalam struct Pesanan
-	var pesanan model.Pesanan
-	if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
-		at.WriteJSON(respw, http.StatusBadRequest, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	// Update pesanan berdasarkan ID
-	filter := bson.M{"_id": id}
-	update := bson.M{"$set": bson.M{"status_pesanan": pesanan.StatusPesanan}}
-
-	_, err = atdb.UpdateOneDoc(config.Mongoconn, "pesanan", filter, update)
-	if err != nil {
-		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{Status: "Error", Response: err.Error()})
-		return
-	}
-
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Status Pesanan berhasil diperbarui",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
-}
-
 // UploadHandler handles file uploads to GitHub
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -676,29 +265,53 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func PostPesanan(respw http.ResponseWriter, req *http.Request) {
-	// Load environment variables
-	err := godotenv.Load("../.env")
-	if err != nil {
-		http.Error(respw, "Failed to load .env file: "+err.Error(), http.StatusInternalServerError)
+// TransaksiHandler handles the creation of a new transaction
+func TransaksiHandler(respw http.ResponseWriter, req *http.Request) {
+
+	// Ensure request is POST
+	if req.Method != http.MethodPost {
+		at.WriteJSON(respw, http.StatusMethodNotAllowed, model.Response{
+			Status:   "Error",
+			Response: "Only POST method is allowed",
+		})
 		return
 	}
 
-	githubOwner := os.Getenv("GITHUB_OWNER")
-	githubRepo := os.Getenv("GITHUB_REPO")
-	githubToken := os.Getenv("GITHUB_TOKEN")
-
-	// Validate environment variables
-	if githubOwner == "" || githubRepo == "" || githubToken == "" {
-		http.Error(respw, "Missing environment variables (GITHUB_OWNER, GITHUB_REPO, or GITHUB_TOKEN)", http.StatusInternalServerError)
+	// Parse form data (limit file upload size to 10MB)
+	err := req.ParseMultipartForm(10 << 20)
+	if err != nil {
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "Failed to parse form data: " + err.Error(),
+		})
 		return
 	}
 
-	// Parse multipart form data
-	req.ParseMultipartForm(10 << 20) // Max file size 10 MB
-	file, fileHeader, err := req.FormFile("file")
+	// Extract form values
+	userID := req.FormValue("user_id")
+	namaPemesan := req.FormValue("nama_pemesan")
+	desainID := req.FormValue("desain_id")
+	namaDesain := req.FormValue("nama_desain")
+	harga := req.FormValue("harga")
+	statusPesanan := req.FormValue("status_pesanan")
+	catatanPesanan := req.FormValue("catatan_pesanan")
+
+	// Validate required fields
+	if userID == "" || namaPemesan == "" || desainID == "" || namaDesain == "" || harga == "" || statusPesanan == "" {
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "Missing required fields",
+		})
+		return
+	}
+
+	// Get file from request
+	file, header, err := req.FormFile("bukti_pembayaran")
 	if err != nil {
-		http.Error(respw, "Failed to read file from form-data: "+err.Error(), http.StatusBadRequest)
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "Failed to read payment proof: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
@@ -706,100 +319,55 @@ func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 	// Read file content
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(respw, "Failed to read file content: "+err.Error(), http.StatusInternalServerError)
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: "Failed to read file content: " + err.Error(),
+		})
 		return
 	}
 
-	// Encode file content to Base64
+	// Encode file content to Base64 (needed for GitHub API)
 	encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
 
-	// Generate file upload path
-	filePath := "bukti_pembayaran/" + fileHeader.Filename
-
-	// Build API URL
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", githubOwner, githubRepo, filePath)
-
-	// Prepare payload for GitHub
-	payload := map[string]string{
-		"message": "Upload bukti pembayaran: " + fileHeader.Filename,
-		"content": encodedContent,
-	}
-	jsonData, err := json.Marshal(payload)
+	// Upload payment proof to GitHub
+	buktiPembayaranURL, err := utils.UploadToGithub(header.Filename, encodedContent)
 	if err != nil {
-		http.Error(respw, "Failed to marshal payload: "+err.Error(), http.StatusInternalServerError)
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: fmt.Sprintf("Failed to upload payment proof: %v", err),
+		})
 		return
 	}
 
-	// Create HTTP PUT request for GitHub
-	reqGithub, err := http.NewRequest("PUT", apiURL, bytes.NewBuffer(jsonData))
+	// Create transaction object
+	transaksi := model.Transaksi{
+		ID:              primitive.NewObjectID(),
+		UserID:          userID,
+		NamaPemesan:     namaPemesan,
+		DesainID:        desainID,
+		NamaDesain:      namaDesain,
+		Harga:           harga,
+		StatusPesanan:   statusPesanan,
+		CatatanPesanan:  catatanPesanan,
+		BuktiPembayaran: buktiPembayaranURL,
+		TanggalPesanan:  time.Now(),
+	}
+
+	// Insert into MongoDB
+	_, err = atdb.InsertOneDoc(config.Mongoconn, "transaksi", transaksi)
 	if err != nil {
-		http.Error(respw, "Failed to create HTTP request: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	reqGithub.Header.Set("Authorization", "Bearer "+githubToken)
-	reqGithub.Header.Set("Content-Type", "application/json")
-
-	// Send request to GitHub
-	client := &http.Client{}
-	respGithub, err := client.Do(reqGithub)
-	if err != nil {
-		http.Error(respw, "Failed to upload file to GitHub: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer respGithub.Body.Close()
-
-	// Check response from GitHub
-	if respGithub.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(respGithub.Body)
-		http.Error(respw, "GitHub upload failed: "+string(body), http.StatusInternalServerError)
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: "Failed to save transaction: " + err.Error(),
+		})
 		return
 	}
 
-	// Extract file URL from GitHub response
-	var githubResp map[string]interface{}
-	err = json.NewDecoder(respGithub.Body).Decode(&githubResp)
-	if err != nil {
-		http.Error(respw, "Failed to parse GitHub response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	buktiPembayaranURL, _ := githubResp["content"].(map[string]interface{})["html_url"].(string)
-
-	// Parse additional form data into Pesanan struct
-	var daftarDesain []model.Portofolio
-	err = json.Unmarshal([]byte(req.FormValue("daftar_desain")), &daftarDesain)
-	if err != nil {
-		http.Error(respw, "Invalid daftar_desain format: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	pesanan := model.Pesanan{
-		ID:             primitive.NewObjectID(),
-		NamaPemesan:    req.FormValue("nama_pemesan"),
-		DaftarDesain:   daftarDesain,
-		TanggalPesanan: time.Now(),
-		StatusPesanan:  "Pending",
-		Pembayaran:     buktiPembayaranURL,
-		CatatanPesanan: req.FormValue("catatan_pesanan"),
-		TotalHarga:     req.FormValue("total_harga"),
-	}
-
-	// Validate required fields
-	if pesanan.NamaPemesan == "" || len(pesanan.DaftarDesain) == 0 || pesanan.TotalHarga == "" {
-		http.Error(respw, "Missing required fields in Pesanan data", http.StatusBadRequest)
-		return
-	}
-
-	// Insert pesanan into database
-	// Define pesananCollection
-	pesananCollection := config.Mongoconn.Collection("pesanan")
-	
-	result, err := pesananCollection.InsertOne(context.TODO(), pesanan)
-	if err != nil {
-		http.Error(respw, "Failed to save pesanan: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Respond with Pesanan data
-	respw.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(respw).Encode(result)
+	// Respond with success
+	at.WriteJSON(respw, http.StatusOK, model.Response{
+		Status:   "Success",
+		Response: "Transaction created successfully",
+		Location: "",
+		Info:     fmt.Sprintf("%+v", transaksi),
+	})
 }

@@ -224,39 +224,39 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	// PESANAN
 	// Insert Pesanan
-	case method == "POST" && path == "/insert/pesanan":
-		controller.CreatePesanan(w, r)
+	// case method == "POST" && path == "/insert/pesanan":
+	// 	controller.TransaksiHandler(w, r)
 	// Get All Pesanan
-	case method == "GET" && path == "/pesanan":
-		controller.GetAllPesanan(w, r)
-	// Update Pesanan
-	case method == "PUT" && path == "/update/pesanan":
-		controller.UpdatePesanan(w, r)
-	// Delete Pesanan
-	case method == "DELETE" && path == "/delete/pesanan":
-		controller.DeletePesanan(w, r)
-	// Get Pesanan By Id
-	case method == "GET" && path == "/pesanan/id":
-		controller.GetPesananByID(w, r)
+	// case method == "GET" && path == "/pesanan":
+	// 	controller.GetAllPesanan(w, r)
+	// // Update Pesanan
+	// case method == "PUT" && path == "/update/pesanan":
+	// 	controller.UpdatePesanan(w, r)
+	// // Delete Pesanan
+	// case method == "DELETE" && path == "/delete/pesanan":
+	// 	controller.DeletePesanan(w, r)
+	// // Get Pesanan By Id
+	// case method == "GET" && path == "/pesanan/id":
+	// 	controller.GetPesananByID(w, r)
 
 	// PEMBAYARAN
 	// Insert Pembayaran
 	case method == "POST" && path == "/insert/pembayaran":
-		controller.CreatePembayaran(w, r)
+		controller.TransaksiHandler(w, r)
 	// Get All Pembayaran
-	case method == "GET" && path == "/pembayaran":
-		controller.GetAllPembayaran(w, r)
+	// case method == "GET" && path == "/pembayaran":
+	// 	controller.GetAllPembayaran(w, r)
 	
 	// ITEM PESANAN
 	// Insert Item Pesanan
-	case method == "POST" && path == "/insert/itempesanan":
-		controller.CreateItemPesanan(w, r)
-	// Get All Item Pesanan
-	case method == "GET" && path == "/itempesanan":
-		controller.GetAllItemPesanan(w, r)
-	// Update Pesan Status
-	case method == "PUT" && path == "/update/itempesanan":
-		controller.UpdatePesanStatus(w, r)
+	// case method == "POST" && path == "/insert/itempesanan":
+	// 	controller.CreateItemPesanan(w, r)
+	// // Get All Item Pesanan
+	// case method == "GET" && path == "/itempesanan":
+	// 	controller.GetAllItemPesanan(w, r)
+	// // Update Pesan Status
+	// case method == "PUT" && path == "/update/itempesanan":
+	// 	controller.UpdatePesanStatus(w, r)
 	
 
 	//GEO
