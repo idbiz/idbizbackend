@@ -36,7 +36,10 @@ type ItemPesanan struct {
 
 type Pembayaran struct {
 	ID                primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	PesananID         string             `json:"pesanan_id,omitempty" bson:"pesanan_id,omitempty"`
+	PortfolioID       string             `json:"portfolio_id,omitempty" bson:"portfolio_id,omitempty"`
+	NamaDesain        string             `json:"nama_desain,omitempty" bson:"nama_desain,omitempty"`
+	Harga             string             `json:"harga,omitempty" bson:"harga,omitempty"`
+	UserID            string             `json:"user_id,omitempty" bson:"user_id,omitempty"`
 	NamaPemesan       string             `json:"nama_pemesan,omitempty" bson:"nama_pemesan,omitempty"`
 	MetodePembayaran  string             `json:"metode_pembayaran,omitempty" bson:"metode_pembayaran,omitempty"` // Contoh: Transfer Bank, E-Wallet, dll.
 	StatusPembayaran  string             `json:"status_pembayaran,omitempty" bson:"status_pembayaran,omitempty"` // Contoh: Pending, Berhasil, Gagal.

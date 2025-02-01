@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/gocroot/config"
 	"github.com/gocroot/helper/at"
 	"github.com/gocroot/helper/atdb"
+	"github.com/gocroot/helper/utils"
 	"github.com/joho/godotenv"
 
 	// "github.com/joho/godotenv"
@@ -631,148 +633,47 @@ func UpdatePesanStatus(respw http.ResponseWriter, req *http.Request) {
 	})
 }
 
+// UploadHandler handles file uploads to GitHub
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-// Check if file exists on GitHub
-func getFileSha(apiURL, token string) (string, error) {
-    req, err := http.NewRequest("GET", apiURL, nil)
-    if err != nil {
-        return "", err
-    }
-    req.Header.Set("Authorization", "Bearer "+token)
+	// Parse file from request
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Failed to read file from request", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
 
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return "", err
-    }
-    defer resp.Body.Close()
+	// Read file content
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Failed to read file content", http.StatusInternalServerError)
+		return
+	}
 
-    if resp.StatusCode == http.StatusNotFound {
-        // File doesn't exist
-        return "", nil
-    } else if resp.StatusCode != http.StatusOK {
-        body, _ := io.ReadAll(resp.Body)
-        return "", fmt.Errorf("GitHub API error: %s\n%s", resp.Status, string(body))
-    }
+	// Encode file to Base64 (required by GitHub API)
+	encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
 
-    var fileData map[string]interface{}
-    err = json.NewDecoder(resp.Body).Decode(&fileData)
-    if err != nil {
-        return "", err
-    }
+	// Upload to GitHub and get public URL
+	fileURL, err := utils.UploadToGithub(header.Filename, encodedContent)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Upload failed: %v", err), http.StatusInternalServerError)
+		return
+	}
 
-    sha, ok := fileData["sha"].(string)
-    if !ok {
-        return "", fmt.Errorf("failed to extract sha from response")
-    }
-
-    return sha, nil
-}
-
-// UploadtoGithub uploads a file to GitHub repository
-func UploadtoGithub(respw http.ResponseWriter, req *http.Request) {
-    // Load environment variables
-    err := godotenv.Load("../.env")
-    if err != nil {
-        http.Error(respw, "Failed to load .env file: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    githubOwner := os.Getenv("GITHUB_OWNER")
-    githubRepo := os.Getenv("GITHUB_REPO")
-    githubToken := os.Getenv("GITHUB_TOKEN")
-
-    // Validate environment variables
-    if githubOwner == "" || githubRepo == "" || githubToken == "" {
-        http.Error(respw, "Missing environment variables (GITHUB_OWNER, GITHUB_REPO, or GITHUB_TOKEN)", http.StatusInternalServerError)
-        return
-    }
-
-    // Parse multipart form data
-    req.ParseMultipartForm(10 << 20) // Max file size 10 MB
-    file, fileHeader, err := req.FormFile("file")
-    if err != nil {
-        http.Error(respw, "Failed to read file from form-data: "+err.Error(), http.StatusBadRequest)
-        return
-    }
-    defer file.Close()
-
-    // Read file content
-    fileBytes, err := io.ReadAll(file)
-    if err != nil {
-        http.Error(respw, "Failed to read file content: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    // Encode file content to Base64
-    encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
-
-    // Generate commit message
-    commitMessage := req.FormValue("message")
-    if commitMessage == "" {
-        commitMessage = "Upload file: " + fileHeader.Filename
-    }
-
-    // Build API URL
-    filePath := "upload/" + fileHeader.Filename
-    apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", githubOwner, githubRepo, filePath)
-
-    // Check if file exists
-    sha, err := getFileSha(apiURL, githubToken)
-    if err != nil {
-        http.Error(respw, "Failed to check file existence: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    // Prepare payload
-    payload := map[string]string{
-        "message": commitMessage,
-        "content": encodedContent,
-    }
-    if sha != "" {
-        payload["sha"] = sha // Include sha if file exists
-    }
-    jsonData, err := json.Marshal(payload)
-    if err != nil {
-        http.Error(respw, "Failed to marshal payload: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    // Create HTTP PUT request
-    reqGithub, err := http.NewRequest("PUT", apiURL, bytes.NewBuffer(jsonData))
-    if err != nil {
-        http.Error(respw, "Failed to create HTTP request: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-    reqGithub.Header.Set("Authorization", "Bearer "+githubToken)
-    reqGithub.Header.Set("Content-Type", "application/json")
-
-    // Execute the request
-    client := &http.Client{}
-    resp, err := client.Do(reqGithub)
-    if err != nil {
-        http.Error(respw, "Failed to send request to GitHub: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-    defer resp.Body.Close()
-
-    // Read response body
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        http.Error(respw, "Failed to read response body: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    // Check response status
-    if resp.StatusCode != http.StatusCreated {
-        http.Error(respw, fmt.Sprintf("GitHub API error: %s\n%s", resp.Status, string(body)), resp.StatusCode)
-        return
-    }
-
-    // Respond with success
-    respw.Header().Set("Content-Type", "application/json")
-    respw.WriteHeader(http.StatusOK)
-    respw.Write([]byte(`{"status":"success", "message":"File successfully uploaded to GitHub"}`))
+	// Respond with success and file URL
+	response := map[string]string{
+		"status":  "success",
+		"message": "File uploaded successfully",
+		"file":    header.Filename,
+		"url":     fileURL, // New: Return the public GitHub URL
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {

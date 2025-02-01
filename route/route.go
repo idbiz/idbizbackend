@@ -276,7 +276,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	
 	// Upload
 	case method == "POST" && path == "/upload":
-		controller.UploadtoGithub(w, r)
+		controller.UploadHandler(w, r)
 	default:
 		controller.NotFound(w, r)
 	}
