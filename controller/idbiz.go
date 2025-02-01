@@ -442,6 +442,96 @@ func GetTransaksiByID(respw http.ResponseWriter, req *http.Request) {
 	})
 }
 
+func GetTransaksiByStatus(respw http.ResponseWriter, req *http.Request) {
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
+	}
+	
+	status := req.URL.Query().Get("status")
+	if status == "" {
+		respondWithError(respw, http.StatusBadRequest, "Status pesanan harus disertakan")
+		return
+	}
+
+	// Filter transaksi berdasarkan status
+	filter := bson.M{"status_pesanan": status}
+
+	var transaksi []model.Transaksi
+	transaksi, err = atdb.GetFilteredDocs[[]model.Transaksi](config.Mongoconn, "transaksi", filter, nil)
+	if err != nil || len(transaksi) == 0 {
+		if err == mongo.ErrNoDocuments || len(transaksi) == 0 {
+			respondWithError(respw, http.StatusNotFound, "Tidak ada transaksi dengan status tersebut")
+		} else {
+			respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+		}
+		return
+	}
+
+	// Response data transaksi
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(http.StatusOK)
+	json.NewEncoder(respw).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   transaksi,
+	})
+}
+
+func DeleteTransaksi(respw http.ResponseWriter, req *http.Request) {
+	// Decode token untuk otentikasi
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
+	}
+
+	// Ambil ID dari parameter URL
+	id := req.URL.Query().Get("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
+		return
+	}
+
+	// Hapus dokumen portofolio berdasarkan ID
+	filter := bson.M{"_id": objID}
+
+	_, err = atdb.DeleteOneDoc(config.Mongoconn, "transaksi", filter)
+	if err != nil {
+		log.Printf("[ERROR] Gagal menghapus portofolio: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	at.WriteJSON(respw, http.StatusOK, model.Response{
+		Response: "Transaksi berhasil dihapus",
+		Info:     "",
+		Status:   "Success",
+		Location: "",
+	})
+}
+
+
 func GetAllTransaksi(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	orders, err := atdb.GetAllDoc[[]model.Transaksi](config.Mongoconn, "transaksi", bson.M{})

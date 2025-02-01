@@ -232,9 +232,15 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Get All Pembayaran
 	case method == "GET" && path == "/data/transaksi":
 		controller.GetAllTransaksi(w, r)
+	// Get Pembayaran By Status
+	case method == "GET" && path == "/transaksi/status":
+		controller.GetTransaksiByStatus(w, r)
 	// Update Pembayaran
 	case method == "PUT" && path == "/update/transaksi":
 		controller.UpdateTransaksi(w, r)
+	// Delete Pembayaran
+	case method == "DELETE" && path == "/delete/transaksi":
+		controller.DeleteTransaksi(w, r)
 	// Get All Pembayaran
 	// case method == "GET" && path == "/pembayaran":
 	// 	controller.GetAllPembayaran(w, r)
