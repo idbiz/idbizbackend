@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	// "fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,6 +17,7 @@ import (
 	"github.com/gocroot/helper/watoken"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
@@ -688,33 +689,97 @@ func LoginAkun(respw http.ResponseWriter, r *http.Request) {
 }
 
 // fungsi get akun customer by id diambil dari token login
-func GetAkunCustomerByID(respw http.ResponseWriter, r *http.Request) {
-	decryptedToken, err := watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(r))
+func GetAkunCustomerByID(respw http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] Memulai proses GetPortofolioByID")
+
+	// Decode token untuk otentikasi
+	log.Println("[INFO] Melakukan decoding token untuk otentikasi")
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 	if err != nil {
-		response := model.Response{
-			Status:   fmt.Sprintf("Error: Token tidak valid || data token: %+v", decryptedToken),
-			Response: "Error: " + err.Error(),
+		log.Println("[WARNING] Token pertama tidak valid, mencoba token kedua")
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			log.Println("[ERROR] Token tidak valid")
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
 		}
-		at.WriteJSON(respw, http.StatusForbidden, response)
+	}
+
+	// Ambil ID dari parameter URL
+	id := req.URL.Query().Get("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
 		return
 	}
 
-	var user model.Userdomyikado
-	err = config.Mongoconn.Collection("user").FindOne(context.Background(), bson.M{"phonenumber": decryptedToken.Id}).Decode(&user)
+	filter := bson.M{"_id": objID}
+
+	user, err := atdb.GetOneDoc[model.Userdomyikado](config.Mongoconn, "user", filter)
 	if err != nil {
-		response := model.Response{
-			Status:   "Error: User tidak ditemukan",
-			Response: "Error: " + err.Error(),
-		}
-		at.WriteJSON(respw, http.StatusNotFound, response)
+		log.Printf("[ERROR] Gagal mengambil portofolio: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
 		return
 	}
 
-	response := map[string]interface{}{
-		"message": "Data berhasil diambil",
-		"user":    user,
+	log.Println("[INFO] Berhasil mengambil user, mengirim respons")
+	at.WriteJSON(respw, http.StatusOK, user)
+}
+
+func DeleteUser(respw http.ResponseWriter, req *http.Request) {
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
 	}
-	at.WriteJSON(respw, http.StatusOK, response)
+
+	// Ambil ID dari parameter URL
+	id := req.URL.Query().Get("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
+		return
+	}
+
+	// Hapus dokumen user berdasarkan ID
+	filter := bson.M{"_id": objID}
+
+	_, err = atdb.DeleteOneDoc(config.Mongoconn, "user", filter)
+	if err != nil {
+		log.Printf("[ERROR] Gagal menghapus portofolio: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	at.WriteJSON(respw, http.StatusOK, model.Response{
+		Response: "User berhasil dihapus",
+		Info:     "",
+		Status:   "Success",
+		Location: "",
+	})
 }
 
 func GetAllAkun(respw http.ResponseWriter, r *http.Request) {

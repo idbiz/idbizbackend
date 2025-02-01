@@ -198,6 +198,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.GetAllAkun(w, r)
 	case method == "GET" && path == "/auth/users":
 		controller.GetUser(w, r)
+	case method == "DELETE" && path == "/delete/user":
+		controller.DeleteUser(w, r)
 	// Logout
 	case method == "POST" && path == "/auth/logout":
 		controller.Logout(w, r)
@@ -279,4 +281,3 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.NotFound(w, r)
 	}
 }
-
