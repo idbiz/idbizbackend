@@ -19,6 +19,7 @@ import (
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/gocroot/helper/watoken"
 	"github.com/gocroot/model"
@@ -220,6 +221,62 @@ func GetPortofolioByKategori(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	at.WriteJSON(respw, http.StatusOK, portofolios)
+}
+
+func respondWithError(respw http.ResponseWriter, code int, message string) {
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(code)
+	json.NewEncoder(respw).Encode(map[string]string{"error": message})
+}
+
+func isValidObjectID(id string) bool {
+    if len(id) != 24 {
+        return false
+    }
+    _, err := primitive.ObjectIDFromHex(id)
+    return err == nil
+}
+
+func GetTransaksiByID(respw http.ResponseWriter, req *http.Request) {
+    transaksiID := req.URL.Query().Get("id")
+    if transaksiID == "" {
+        respondWithError(respw, http.StatusBadRequest, "Pesanan ID harus disertakan")
+        return
+    }
+
+    // Validasi ID apakah valid ObjectID
+    if !isValidObjectID(transaksiID) {
+        respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+        return
+    }
+
+    // Konversi ID menjadi ObjectID MongoDB
+    objID, err := primitive.ObjectIDFromHex(transaksiID)
+    if err != nil {
+        respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+        return
+    }
+
+    // Filter berdasarkan ID
+    filter := bson.M{"_id": objID}
+    var pesanan []model.Transaksi
+    pesanan, err = atdb.GetFilteredDocs[[]model.Transaksi](config.Mongoconn, "transaksi", filter, nil)
+    if err != nil || len(pesanan) == 0 {
+        if err == mongo.ErrNoDocuments || len(pesanan) == 0 {
+            respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
+        } else {
+            respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+        }
+        return
+    }
+
+    // Response data pesanan
+    respw.Header().Set("Content-Type", "application/json")
+    respw.WriteHeader(http.StatusOK)
+    json.NewEncoder(respw).Encode(map[string]interface{}{
+        "status": "success",
+        "data":   pesanan[0],
+    })
 }
 
 // UploadHandler handles file uploads to GitHub
