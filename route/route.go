@@ -190,16 +190,25 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Register
 	case method == "POST" && path == "/auth/register":
 		controller.RegisterAkun(w, r)
+	// Login
 	case method == "POST" && path == "/auth/login/form":
 		controller.LoginAkun(w, r)
+	// Get User By ID
 	case method == "GET" && path == "/auth/users/cust/id":
 		controller.GetAkunCustomerByID(w, r)
+	// Get All User
 	case method == "GET" && path == "/auth/users/all":
 		controller.GetAllAkun(w, r)
+	// User Whatsauth
 	case method == "GET" && path == "/auth/users":
 		controller.GetUser(w, r)
+	// Delete User
 	case method == "DELETE" && path == "/delete/user":
 		controller.DeleteUser(w, r)
+	// Update User
+	case method == "PUT" && path == "/update/user":
+		controller.UpdateUser(w, r)
+		
 	// Logout
 	case method == "POST" && path == "/auth/logout":
 		controller.Logout(w, r)

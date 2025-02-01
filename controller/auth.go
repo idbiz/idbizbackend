@@ -736,6 +736,83 @@ func GetAkunCustomerByID(respw http.ResponseWriter, req *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, user)
 }
 
+func UpdateUser(respw http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] Memulai proses UpdateUser")
+
+	// Decode token untuk otentikasi
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			log.Println("[ERROR] Token tidak valid")
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
+	}
+
+	// Ambil ID dari URL Path
+	id := req.URL.Query().Get("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
+		return
+	}
+
+	// Decode request body ke dalam struct User
+	var newUser struct {
+		Name          string `json:"name"`
+		PhoneNumber   string `json:"phonenumber"`
+		Email         string `json:"email"`
+		Team          string `json:"team"`
+		Scope         string `json:"scope"`
+		JumlahAntrian int    `json:"jumlahAntrian"`
+		Role          string `json:"role"`
+	}
+	if err := json.NewDecoder(req.Body).Decode(&newUser); err != nil {
+		log.Printf("[ERROR] Gagal mendekode request body: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	// Hapus field `_id` dari update
+	updateData := bson.M{
+		"name":          newUser.Name,
+		"phonenumber":   newUser.PhoneNumber,
+		"email":         newUser.Email,
+		"team":          newUser.Team,
+		"scope":         newUser.Scope,
+		"jumlahAntrian": newUser.JumlahAntrian,
+		"role":          newUser.Role,
+	}
+
+	// Update dokumen user berdasarkan ID
+	collection := config.Mongoconn.Collection("user")
+	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objID}, bson.M{"$set": updateData})
+	if err != nil {
+		log.Printf("[ERROR] Gagal memperbarui user: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	at.WriteJSON(respw, http.StatusOK, model.Response{
+		Response: "User berhasil diperbarui",
+		Status:   "Success",
+	})
+}
+
 func DeleteUser(respw http.ResponseWriter, req *http.Request) {
 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 	if err != nil {
