@@ -929,9 +929,19 @@ func GetUser(respw http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(respw http.ResponseWriter, r *http.Request) {
-	// Extract token from request cookies
+	var token string
+
+	// check for the token in cookies
 	cookie, err := r.Cookie("login")
-	if err != nil || cookie.Value == "" {
+	if err == nil && cookie.Value != "" {
+		token = cookie.Value
+	} else {
+		// check the Authorization header
+		token = r.Header.Get("login")
+	}
+
+	// If no token found, return Unauthorized
+	if token == "" {
 		at.WriteJSON(respw, http.StatusUnauthorized, model.Response{
 			Status:   "Unauthorized",
 			Response: "No active session found",
@@ -956,4 +966,3 @@ func Logout(respw http.ResponseWriter, r *http.Request) {
 	}
 	at.WriteJSON(respw, http.StatusOK, response)
 }
-
