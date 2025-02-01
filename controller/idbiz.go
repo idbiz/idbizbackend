@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/gocroot/config"
@@ -230,53 +230,53 @@ func respondWithError(respw http.ResponseWriter, code int, message string) {
 }
 
 func isValidObjectID(id string) bool {
-    if len(id) != 24 {
-        return false
-    }
-    _, err := primitive.ObjectIDFromHex(id)
-    return err == nil
+	if len(id) != 24 {
+		return false
+	}
+	_, err := primitive.ObjectIDFromHex(id)
+	return err == nil
 }
 
 func GetTransaksiByID(respw http.ResponseWriter, req *http.Request) {
-    transaksiID := req.URL.Query().Get("id")
-    if transaksiID == "" {
-        respondWithError(respw, http.StatusBadRequest, "Pesanan ID harus disertakan")
-        return
-    }
+	transaksiID := req.URL.Query().Get("id")
+	if transaksiID == "" {
+		respondWithError(respw, http.StatusBadRequest, "Pesanan ID harus disertakan")
+		return
+	}
 
-    // Validasi ID apakah valid ObjectID
-    if !isValidObjectID(transaksiID) {
-        respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
-        return
-    }
+	// Validasi ID apakah valid ObjectID
+	if !isValidObjectID(transaksiID) {
+		respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+		return
+	}
 
-    // Konversi ID menjadi ObjectID MongoDB
-    objID, err := primitive.ObjectIDFromHex(transaksiID)
-    if err != nil {
-        respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
-        return
-    }
+	// Konversi ID menjadi ObjectID MongoDB
+	objID, err := primitive.ObjectIDFromHex(transaksiID)
+	if err != nil {
+		respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+		return
+	}
 
-    // Filter berdasarkan ID
-    filter := bson.M{"_id": objID}
-    var pesanan []model.Transaksi
-    pesanan, err = atdb.GetFilteredDocs[[]model.Transaksi](config.Mongoconn, "transaksi", filter, nil)
-    if err != nil || len(pesanan) == 0 {
-        if err == mongo.ErrNoDocuments || len(pesanan) == 0 {
-            respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
-        } else {
-            respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
-        }
-        return
-    }
+	// Filter berdasarkan ID
+	filter := bson.M{"_id": objID}
+	var pesanan []model.Transaksi
+	pesanan, err = atdb.GetFilteredDocs[[]model.Transaksi](config.Mongoconn, "transaksi", filter, nil)
+	if err != nil || len(pesanan) == 0 {
+		if err == mongo.ErrNoDocuments || len(pesanan) == 0 {
+			respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
+		} else {
+			respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+		}
+		return
+	}
 
-    // Response data pesanan
-    respw.Header().Set("Content-Type", "application/json")
-    respw.WriteHeader(http.StatusOK)
-    json.NewEncoder(respw).Encode(map[string]interface{}{
-        "status": "success",
-        "data":   pesanan[0],
-    })
+	// Response data pesanan
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(http.StatusOK)
+	json.NewEncoder(respw).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   pesanan[0],
+	})
 }
 
 func GetAllTransaksi(respw http.ResponseWriter, req *http.Request) {
@@ -293,49 +293,69 @@ func GetAllTransaksi(respw http.ResponseWriter, req *http.Request) {
 // UploadHandler handles file uploads to GitHub
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		at.WriteJSON(w, http.StatusMethodNotAllowed, model.Response{
+			Status:   "Error",
+			Response: "Only POST method is allowed",
+		})
 		return
 	}
 
 	// Parse file from request
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Failed to read file from request", http.StatusBadRequest)
+		at.WriteJSON(w, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "Failed to read file from request: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
 
 	// Read file content
-	fileBytes, err := ioutil.ReadAll(file)
+	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, "Failed to read file content", http.StatusInternalServerError)
+		at.WriteJSON(w, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: "Failed to read file content: " + err.Error(),
+		})
 		return
 	}
 
-	// Encode file to Base64 (required by GitHub API)
+	// Generate a unique ID
+	uniqueID := primitive.NewObjectID().Hex()
+
+	// Append unique ID to filename (e.g., "receipt.png" -> "receipt_<uniqueID>.png")
+	originalFileName := header.Filename
+	extIndex := len(originalFileName) - len(filepath.Ext(originalFileName))
+	newFileName := originalFileName[:extIndex] + "_" + uniqueID + filepath.Ext(originalFileName)
+
+	// Encode file content to Base64 (required by GitHub API)
 	encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
 
-	// Upload to GitHub and get public URL
-	fileURL, err := utils.UploadToGithub(header.Filename, encodedContent)
+	// Get MongoDB connection from config
+	db := config.Mongoconn
+
+	// Upload to GitHub using credentials from MongoDB
+	_, err = utils.UploadToGithub(newFileName, encodedContent, db)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Upload failed: %v", err), http.StatusInternalServerError)
+		at.WriteJSON(w, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: fmt.Sprintf("Upload failed: %v", err),
+		})
 		return
 	}
 
 	// Respond with success and file URL
-	response := map[string]string{
-		"status":  "success",
-		"message": "File uploaded successfully",
-		"file":    header.Filename,
-		"url":     fileURL, // New: Return the public GitHub URL
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	at.WriteJSON(w, http.StatusOK, model.Response{
+		Response: "File uploaded successfully",
+		Info:     "",
+		Status:   "Success",
+		Location: "",
+	})
 }
 
 // TransaksiHandler handles the creation of a new transaction
 func TransaksiHandler(respw http.ResponseWriter, req *http.Request) {
-
 	// Ensure request is POST
 	if req.Method != http.MethodPost {
 		at.WriteJSON(respw, http.StatusMethodNotAllowed, model.Response{
@@ -394,11 +414,22 @@ func TransaksiHandler(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Generate a unique ID for the filename
+	uniqueID := primitive.NewObjectID().Hex()
+
+	// Append unique ID to filename
+	originalFileName := header.Filename
+	extIndex := len(originalFileName) - len(filepath.Ext(originalFileName))
+	newFileName := originalFileName[:extIndex] + "_" + uniqueID + filepath.Ext(originalFileName)
+
 	// Encode file content to Base64 (needed for GitHub API)
 	encodedContent := base64.StdEncoding.EncodeToString(fileBytes)
 
+	// Get MongoDB connection from config
+	db := config.Mongoconn
+
 	// Upload payment proof to GitHub
-	buktiPembayaranURL, err := utils.UploadToGithub(header.Filename, encodedContent)
+	buktiPembayaranURL, err := utils.UploadToGithub(newFileName, encodedContent, db)
 	if err != nil {
 		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
 			Status:   "Error",
@@ -422,7 +453,7 @@ func TransaksiHandler(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Insert into MongoDB
-	_, err = atdb.InsertOneDoc(config.Mongoconn, "transaksi", transaksi)
+	_, err = atdb.InsertOneDoc(db, "transaksi", transaksi)
 	if err != nil {
 		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
 			Status:   "Error",
@@ -433,9 +464,9 @@ func TransaksiHandler(respw http.ResponseWriter, req *http.Request) {
 
 	// Respond with success
 	at.WriteJSON(respw, http.StatusOK, model.Response{
+		Response: "Transaksi berhasil disimpan",
+		Info:     "",
 		Status:   "Success",
-		Response: "Transaction created successfully",
 		Location: "",
-		Info:     fmt.Sprintf("%+v", transaksi),
 	})
 }
