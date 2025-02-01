@@ -232,6 +232,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// Get All Pembayaran
 	case method == "GET" && path == "/data/transaksi":
 		controller.GetAllTransaksi(w, r)
+	// Update Pembayaran
+	case method == "PUT" && path == "/update/transaksi":
+		controller.UpdateTransaksi(w, r)
 	// Get All Pembayaran
 	// case method == "GET" && path == "/pembayaran":
 	// 	controller.GetAllPembayaran(w, r)

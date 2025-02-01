@@ -260,6 +260,103 @@ func GetPortofolioByID(respw http.ResponseWriter, req *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, portofolio)
 }
 
+func UpdateTransaksi(respw http.ResponseWriter, req *http.Request) {
+	log.Println("[INFO] Memulai proses UpdateTransaksi")
+
+	// Decode token untuk otentikasi
+	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+	if err != nil {
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			log.Println("[ERROR] Token tidak valid")
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
+	}
+
+	// Ambil ID dari URL Path
+	id := req.URL.Query().Get("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("[ERROR] ID tidak valid sebagai ObjectID: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "ID tidak valid",
+		})
+		return
+	}
+
+	// Decode request body ke dalam struct Transaksi
+	var transaksi struct {
+		UserID          string `json:"user_id"`
+		NamaPemesan     string `json:"nama_pemesan"`
+		DesainID        string `json:"desain_id"`
+		NamaDesain      string `json:"nama_desain"`
+		Harga           string `json:"harga"`
+		StatusPesanan   string `json:"status_pesanan"`
+		CatatanPesanan  string `json:"catatan_pesanan"`
+		BuktiPembayaran string `json:"bukti_pembayaran"`
+		TanggalPesanan  string `json:"tanggal_pesanan"`
+	}
+
+	if err := json.NewDecoder(req.Body).Decode(&transaksi); err != nil {
+		log.Printf("[ERROR] Gagal mendekode request body: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+	
+	parsedTime, err := time.Parse(time.RFC3339, transaksi.TanggalPesanan)
+	if err != nil {
+		log.Printf("[ERROR] Format tanggal_pesanan tidak valid: %s", err.Error())
+		at.WriteJSON(respw, http.StatusBadRequest, model.Response{
+			Status:   "Error",
+			Response: "Format tanggal_pesanan tidak valid, gunakan format RFC3339",
+		})
+		return
+	}
+
+	// Hapus field _id dari update
+	updateData := bson.M{
+		"user_id":          transaksi.UserID,
+		"nama_pemesan":     transaksi.NamaPemesan,
+		"desain_id":        transaksi.DesainID,
+		"nama_desain":      transaksi.NamaDesain,
+		"harga":            transaksi.Harga,
+		"status_pesanan":   transaksi.StatusPesanan,
+		"catatan_pesanan":  transaksi.CatatanPesanan,
+		"bukti_pembayaran": transaksi.BuktiPembayaran,
+		"tanggal_pesanan":  parsedTime,
+	}
+
+	if transaksi.TanggalPesanan != "" {
+		updateData["tanggal_pesanan"] = parsedTime
+	}
+
+	// Update dokumen transaksi berdasarkan ID
+	collection := config.Mongoconn.Collection("transaksi")
+	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objID}, bson.M{"$set": updateData})
+	if err != nil {
+		log.Printf("[ERROR] Gagal memperbarui transaksi: %s", err.Error())
+		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+			Status:   "Error",
+			Response: err.Error(),
+		})
+		return
+	}
+
+	log.Println("[INFO] Transaksi berhasil diperbarui")
+	at.WriteJSON(respw, http.StatusOK, model.Response{
+		Response: "Transaksi berhasil diperbarui",
+		Status:   "Success",
+	})
+}
+
 func GetPortofolioByKategori(respw http.ResponseWriter, req *http.Request) {
 	// Decode token untuk otentikasi
 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
