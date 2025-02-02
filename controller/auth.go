@@ -774,6 +774,7 @@ func UpdateUser(respw http.ResponseWriter, req *http.Request) {
 		Scope         string `json:"scope"`
 		JumlahAntrian int    `json:"jumlahAntrian"`
 		Role          string `json:"role"`
+		Password	  string `json:"password"`
 	}
 	if err := json.NewDecoder(req.Body).Decode(&newUser); err != nil {
 		log.Printf("[ERROR] Gagal mendekode request body: %s", err.Error())
@@ -793,6 +794,7 @@ func UpdateUser(respw http.ResponseWriter, req *http.Request) {
 		"scope":         newUser.Scope,
 		"jumlahAntrian": newUser.JumlahAntrian,
 		"role":          newUser.Role,
+		"password":      newUser.Password,
 	}
 
 	// Update dokumen user berdasarkan ID
