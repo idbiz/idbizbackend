@@ -797,6 +797,20 @@ func UpdateUser(respw http.ResponseWriter, req *http.Request) {
 		"password":      newUser.Password,
 	}
 
+	// Hash password sebelum di update
+	if newUser.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("[ERROR] Gagal meng-hash password: %s", err.Error())
+			at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
+				Status:   "Error",
+				Response: "Gagal meng-hash password",
+			})
+			return
+		}
+		updateData["password"] = string(hashedPassword)
+	}
+
 	// Update dokumen user berdasarkan ID
 	collection := config.Mongoconn.Collection("user")
 	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objID}, bson.M{"$set": updateData})
