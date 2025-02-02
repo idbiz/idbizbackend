@@ -510,12 +510,12 @@ func DeleteTransaksi(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Hapus dokumen portofolio berdasarkan ID
+	// Hapus dokumen transaksi berdasarkan ID
 	filter := bson.M{"_id": objID}
 
 	_, err = atdb.DeleteOneDoc(config.Mongoconn, "transaksi", filter)
 	if err != nil {
-		log.Printf("[ERROR] Gagal menghapus portofolio: %s", err.Error())
+		log.Printf("[ERROR] Gagal menghapus transaksi: %s", err.Error())
 		at.WriteJSON(respw, http.StatusInternalServerError, model.Response{
 			Status:   "Error",
 			Response: err.Error(),
@@ -530,7 +530,6 @@ func DeleteTransaksi(respw http.ResponseWriter, req *http.Request) {
 		Location: "",
 	})
 }
-
 
 func GetAllTransaksi(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
