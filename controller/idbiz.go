@@ -716,10 +716,11 @@ func TransaksiHandler(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Respond with success
-	at.WriteJSON(respw, http.StatusOK, model.Response{
-		Response: "Transaksi berhasil disimpan",
-		Info:     "",
-		Status:   "Success",
-		Location: "",
-	})
+	response := map[string]interface{}{
+		"status":        "Success",
+		"message":       "Transaksi berhasil disimpan",
+		"data":          transaksi,
+	}
+
+	at.WriteJSON(respw, http.StatusOK, response)
 }
