@@ -282,6 +282,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	// register admin
 	case method == "POST" && path == "/auth/register/admin":
 		controller.RegisterAkunAdmin(w, r)
+	// get all admin
+	case method == "GET" && path == "/auth/admin":
+		controller.GetAllAkunAdmin(w, r)
 	
 	// Upload
 	case method == "POST" && path == "/upload":

@@ -1025,6 +1025,32 @@ func RegisterAkunAdmin(respw http.ResponseWriter, r *http.Request) {
 	at.WriteJSON(respw, http.StatusOK, response)
 }
 
+func GetAllAkunAdmin(respw http.ResponseWriter, r *http.Request) {
+	var admin []model.Userdomyikado
+	cursor, err := config.Mongoconn.Collection("admin").Find(context.Background(), bson.M{})
+	if err != nil {
+		response := model.Response{
+			Status:   "Error: Gagal mengambil data admin",
+			Response: "Error: " + err.Error(),
+		}
+		at.WriteJSON(respw, http.StatusNotFound, response)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var user model.Userdomyikado
+		cursor.Decode(&user)
+		admin = append(admin, user)
+	}
+
+	response := map[string]interface{}{
+		"message": "Data berhasil diambil",
+		"user":    admin,
+	}
+	at.WriteJSON(respw, http.StatusOK, response)
+}
+
 func GetUser(respw http.ResponseWriter, r *http.Request) {
 	// Retrieve the WA token from the header (or cookies if it's stored there)
 	// token := at.GetLoginFromHeader(r) // Assuming the token is in the header
