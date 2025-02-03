@@ -584,7 +584,7 @@ func RegisterAkun(respw http.ResponseWriter, r *http.Request) {
 
 	role := request.Role
 	if role == "" {
-		role = "user"
+		role = "customer"
 	}
 	newUser := model.Userdomyikado{
 		Name:          request.Name,
