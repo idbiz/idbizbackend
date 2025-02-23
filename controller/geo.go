@@ -11,17 +11,18 @@ import (
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
 )
-
+// Bargana Kukuh Raditya
 func GetRoads(respw http.ResponseWriter, req *http.Request) {
 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 	if err != nil {
-		var respn model.Response
-		respn.Status = "Error : Token Tidak Valid "
-		respn.Info = config.PublicKeyWhatsAuth
-		respn.Location = "Decode Token Error: " + at.GetLoginFromHeader(req)
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusForbidden, respn)
-		return
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
 	}
 
 	var longlat model.LongLat
@@ -57,13 +58,14 @@ func GetRoads(respw http.ResponseWriter, req *http.Request) {
 func GetRegion(respw http.ResponseWriter, req *http.Request) {
 	_, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
 	if err != nil {
-		var respn model.Response
-		respn.Status = "Error : Token Tidak Valid "
-		respn.Info = config.PublicKeyWhatsAuth
-		respn.Location = "Decode Token Error: " + at.GetLoginFromHeader(req)
-		respn.Response = err.Error()
-		at.WriteJSON(respw, http.StatusForbidden, respn)
-		return
+		_, err = watoken.Decode(config.PUBLICKEY, at.GetLoginFromHeader(req))
+		if err != nil {
+			at.WriteJSON(respw, http.StatusForbidden, model.Response{
+				Status:   "Error: Token Tidak Valid",
+				Response: err.Error(),
+			})
+			return
+		}
 	}
 
 	var longlat model.LongLat
